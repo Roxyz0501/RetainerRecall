@@ -1,0 +1,20 @@
+using System.Numerics;
+using Dalamud.Configuration;
+
+namespace RetainerRecall;
+
+[Serializable]
+public sealed class Configuration : IPluginConfiguration
+{
+    public int Version { get; set; } = 1;
+    public ButtonSettings Player = new();
+    public ButtonSettings Retainer = new() { Offset = new(8, 42) };
+}
+
+[Serializable]
+public sealed class ButtonSettings
+{
+    public bool Visible = true;
+    public float DelaySeconds = 1.5f;
+    public Vector2 Offset = new(8, 8);
+}
