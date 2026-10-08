@@ -1,6 +1,6 @@
 # Publication state
 
-## 2026-10-08 version 0.2.0.2 preparation
+## 2026-10-08 version 0.2.0.2 publication
 
 - User-reported native crash traced to ListingGamePort.Confirm -> AddonRetainerSell.ReceiveEvent. The fifth argument (AtkEventData) was omitted; native access violation read address 7, consistent with the null input's modifier byte.
 - NativeButton now supplies fully initialized input data for the registered ButtonClick event. Button owner null checks precede IsEnabled dereferences.
@@ -8,7 +8,9 @@
 - No raw crash logs, dumps, item details, machine identifiers or local paths are included in publication.
 - Release target: https://github.com/Roxyz0501/RetainerRecall/releases/tag/v0.2.0.2
 - ZIP target: https://github.com/Roxyz0501/RetainerRecall/releases/download/v0.2.0.2/RetainerRecall-0.2.0.2.zip
-- Corrected in-game operation remains unverified. Full-armoury recall issue remains unresolved. Publication pending final Release build and package verification.
+- Corrected in-game operation remains unverified. Full-armoury recall issue remains unresolved. Clean Release build passed with zero warnings/errors. Published from source commit `7706ea0`; public source/icon HTTP 200 and image/png, downloaded ZIP metadata and SHA-256 `2888F4FE1E0F20EF2E8E9FF8C2AC95D428D90C4BA98384E98F34E1CC8229144B` verified.
+- Shared index registration `38c2f77f30d0165dd36f56833ed17f5d57884b5b` verified anonymously at both pinned and normal main URLs; six entries with all five others preserved.
+- Old 0.2.0.0/0.2.0.1 release descriptions now warn of the known crash and link to the fixed release.
 
 ## 2026-10-08 version 0.2.0.1 publication
 
