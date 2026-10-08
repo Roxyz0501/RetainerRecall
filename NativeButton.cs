@@ -7,7 +7,7 @@ internal static unsafe class NativeButton
     public static void Click(AtkUnitBase* addon, AtkComponentButton* button)
     {
         if (addon == null || button == null || button->OwnerNode == null || !button->IsEnabled)
-            throw new InvalidOperationException("出品ボタンが無効です");
+            throw new LocalizedException(L.M("ButtonDisabled"));
 
         var evt = button->OwnerNode->AtkEventManager.Event;
         for (var i = 0; evt != null && i < 32; i++, evt = evt->NextEvent)
@@ -20,6 +20,6 @@ internal static unsafe class NativeButton
             addon->ReceiveEvent(evt->State.EventType, (int)evt->Param, evt, &input);
             return;
         }
-        throw new InvalidOperationException("出品ボタンの通常クリックイベントが見つかりません");
+        throw new LocalizedException(L.M("ClickMissing"));
     }
 }

@@ -1,5 +1,21 @@
 # Publication state
 
+## 2026-10-08 version 0.3.0.0 publication in progress
+
+- User authorized publishing completed localization work. Scope is the reviewed seven-language implementation and tests; listing/recall dispatch is unchanged. No CSV/data-exchange exporter exists in this plugin.
+- Release target: https://github.com/Roxyz0501/RetainerRecall/releases/tag/v0.3.0.0
+- ZIP target: https://github.com/Roxyz0501/RetainerRecall/releases/download/v0.3.0.0/RetainerRecall-0.3.0.0.zip
+- Shared repository and root publication state are maintained by the coordinating task and are not modified here.
+
+## 2026-10-08 version 0.3.0.0 local localization preparation (not published)
+
+- Implemented shared localization specification v1.0: ja/en/de/fr/ko/zh-Hans/zh-Hant, immediate switching and persistence, no Auto option. Existing settings and operation enums retained.
+- Initial detection uses public API 15 IClientState.ClientLanguage, then IDalamudPluginInterface.UiLanguage, then English. No public launcher-language API is available in the installed SDK; that stage is omitted. Existing saved selection wins.
+- Translated UI, errors/status and command help. Status keys remain live across language changes. Game-provided text is unchanged. Dalamud-provided Noto Sans CJK fonts use the public managed font atlas; all seven resources are embedded in the DLL.
+- Clean Release rebuild: zero warnings/errors. 149 managed checks, 12 native ABI checks and 20 isolated ImGui/font/UI checks passed. All resource characters and selector names exist in all four host font faces; representative listing/recall/support layouts and mouse switching checked. Game-host rendering and in-game operations remain unverified.
+- Local package: dist/RetainerRecall-0.3.0.0.zip. SHA-256: 4367019DF02E29706EFD6394FDDB140C75EAA8D010FD720A3F7E7E0CEFD1E66D. Seven embedded resources, manifest version/RepoUrl/IconUrl and package contents verified. No font files, host DLLs, generated test artifacts or private settings bundled.
+- No push, GitHub release or shared index update performed for this preparation. Public release remains 0.2.0.3. Floating status window remains removed.
+
 ## 2026-10-08 version 0.2.0.3 publication
 
 - Removed the floating progress/status window and its settings button at the user's request. Recall buttons remain; settings open via the plugin installer or commands. Status and stop controls remain inside settings, with chat notifications unchanged.

@@ -4,7 +4,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Version>0.2.0.3</Version>
+    <Version>0.3.0.0</Version>
     <Authors>Roxyz0501</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepoUrl>https://github.com/Roxyz0501/RetainerRecall</RepoUrl>
@@ -13,4 +13,5 @@
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
   <ItemGroup><Compile Remove="Tests/**/*.cs" /></ItemGroup>
+  <ItemGroup><EmbeddedResource Include="Localization/*.json" LogicalName="RetainerRecall.Localization.%(Filename).json" /></ItemGroup>
 </Project>

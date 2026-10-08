@@ -37,6 +37,7 @@ p.MenuReady = false; r.Tick(2); r.Tick(6); Check(!r.Running && p.Moves == 0 && p
 (p, r) = Create(); r.Start(Destination.Player, 1, 0); r.Tick(1); p.Space = false; r.Tick(1.3); Check(!r.Running && p.Moves == 0, "recheck destination before menu selection");
 (p, r) = Create(); r.Start(Destination.Player, 1, 0); r.Tick(1); p.S = p.S! with { Listings = [FakePort.B] }; r.Tick(1.3); Check(!r.Running && p.Moves == 0, "source mutation before menu selection stops");
 ListingTests.Run(Check);
+LocalizationTests.Run(Check);
 Console.WriteLine($"{passed} checks passed");
 
 sealed class FakePort : IRecallPort

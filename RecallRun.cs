@@ -18,7 +18,7 @@ public interface IRecallPort
 public sealed class RecallRun(IRecallPort port)
 {
     public bool Running { get; private set; }
-    public string Status { get; private set; } = "待機中";
+    public Text Status { get; private set; } = L.M("Idle");
     public int Completed { get; private set; }
     private Snapshot? expected;
     private Listing? pending;
@@ -30,10 +30,10 @@ public sealed class RecallRun(IRecallPort port)
     public void Start(Destination target, double seconds, double now)
     {
         if (Running) return;
-        if (now < restartAfter) { Status = "前回の回収処理の終了を待っています。しばらくしてから再実行してください"; return; }
+        if (now < restartAfter) { Status = L.M("RecallPending"); return; }
         var snapshot = port.Read();
-        if (snapshot == null || port.IsBusy) { Stop("販売リストを開き、他の操作を終了してください"); return; }
-        if (snapshot.Listings.Length == 0) { Stop("出品中のアイテムはありません"); return; }
+        if (snapshot == null || port.IsBusy) { Stop(L.M("OpenSaleList")); return; }
+        if (snapshot.Listings.Length == 0) { Stop(L.M("NoListings")); return; }
         expected = snapshot;
         destination = target;
         delay = double.IsFinite(seconds) ? Math.Clamp(seconds, 0.1, 30) : 1.5;
@@ -42,10 +42,10 @@ public sealed class RecallRun(IRecallPort port)
         Completed = 0;
         nextAt = now + delay;
         Running = true;
-        Status = "回収開始を待機中";
+        Status = L.M("RecallStart");
     }
 
-    public void Stop(string reason = "停止しました")
+    public void Stop(Text? reason = null)
     {
         if (pending != null) restartAfter = Math.Max(restartAfter, deadline);
         Running = false;
@@ -53,7 +53,7 @@ public sealed class RecallRun(IRecallPort port)
         expected = null;
         waitingMenu = false;
         port.ResetMenu();
-        Status = reason;
+        Status = reason ?? L.M("Stopped");
     }
 
     public void Tick(double now)
@@ -61,17 +61,17 @@ public sealed class RecallRun(IRecallPort port)
         if (!Running || expected == null) return;
         var current = port.Read();
         if (current == null || current.RetainerId != expected.RetainerId || current.CharacterId != expected.CharacterId || current.Window != expected.Window)
-        { Stop("画面・キャラクター・リテイナーが変わったため停止しました"); return; }
-        if (port.IsBusy) { Stop("他のメニュー操作を検出したため停止しました"); return; }
+        { Stop(L.M("RecallSessionChanged")); return; }
+        if (port.IsBusy) { Stop(L.M("RecallInterference")); return; }
         if (pending != null)
         {
             if (waitingMenu)
             {
-                if (!current.Listings.SequenceEqual(expected.Listings)) { Stop("メニュー操作中に出品が変更されたため停止しました"); return; }
-                if (now >= deadline) { Stop("取り下げメニューを確認できず停止しました"); return; }
+                if (!current.Listings.SequenceEqual(expected.Listings)) { Stop(L.M("MenuStockChanged")); return; }
+                if (now >= deadline) { Stop(L.M("RecallMenuTimeout")); return; }
                 if (now < nextAt) return;
-                if (!port.HasSpace(destination)) { Stop("移動先の空きがなくなったため停止しました"); return; }
-                if (port.Count(destination, pending) != beforeCount) { Stop("移動先が変更されたため停止しました"); return; }
+                if (!port.HasSpace(destination)) { Stop(L.M("SpaceLost")); return; }
+                if (port.Count(destination, pending) != beforeCount) { Stop(L.M("DestinationChanged")); return; }
                 if (port.SelectRecall(destination, pending)) { waitingMenu = false; deadline = now + 15; }
                 return;
             }
@@ -83,25 +83,25 @@ public sealed class RecallRun(IRecallPort port)
                 pending = null;
                 port.ResetMenu();
                 nextAt = now + delay;
-                Status = $"{Completed}件回収済み / 残り{remaining.Length}件";
-                if (remaining.Length == 0) Stop($"完了: {Completed}件を回収しました");
+                Status = L.M("RecallProgress", Completed, remaining.Length);
+                if (remaining.Length == 0) Stop(L.M("RecallDone", Completed));
                 return;
             }
             if (!current.Listings.SequenceEqual(expected.Listings) && !current.Listings.SequenceEqual(remaining))
-            { Stop("出品内容の変更を検出したため停止しました"); return; }
-            if (now >= deadline) Stop("回収結果を確認できず停止しました。自動再試行はしません");
+            { Stop(L.M("RecallUnexpected")); return; }
+            if (now >= deadline) Stop(L.M("RecallTimeout"));
             return;
         }
-        if (!current.Listings.SequenceEqual(expected.Listings)) { Stop("出品内容が変更されたため停止しました"); return; }
+        if (!current.Listings.SequenceEqual(expected.Listings)) { Stop(L.M("RecallStockChanged")); return; }
         if (now < nextAt) return;
-        if (!port.HasSpace(destination)) { Stop("移動先に空き枠がないか、所持品を読み込めないため停止しました"); return; }
+        if (!port.HasSpace(destination)) { Stop(L.M("NoDestination")); return; }
         pending = current.Listings[0];
         beforeCount = port.Count(destination, pending);
-        if (beforeCount < 0) { Stop("移動先の所持品を読み込めません"); return; }
+        if (beforeCount < 0) { Stop(L.M("DestinationUnreadable")); return; }
         deadline = now + 5;
         nextAt = now + 0.2;
         waitingMenu = true;
-        Status = $"取り下げメニューを操作中（{Completed}件完了）";
+        Status = L.M("RecallMenuProgress", Completed);
         port.OpenRecallMenu(pending);
     }
 }

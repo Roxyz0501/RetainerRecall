@@ -31,7 +31,7 @@ public static class StackLimitPolicy
         var root = doc.RootElement;
         var enabled = root.GetProperty("UseMaxStackSize").GetBoolean();
         var count = root.GetProperty("MaximumStackSize").GetInt32();
-        if (count is < 1 or > 9999) throw new InvalidOperationException("Marketbuddyの数量が範囲外です");
+        if (count is < 1 or > 9999) throw new LocalizedException(L.M("MarketRange"));
         return enabled ? count : 99;
     }
 }
@@ -76,7 +76,7 @@ public sealed class ListingRun(IListingPort port)
     public enum Stage { Idle, Delay, Menu, Dialog, Verify, Acknowledge }
     public Stage State { get; private set; }
     public bool Running => State != Stage.Idle;
-    public string Status { get; private set; } = "連続出品: 待機中";
+    public Text Status { get; private set; } = L.M("ListingIdle");
     public int Completed { get; private set; }
     private ListingFrame? before;
     private Stock? source;
@@ -88,26 +88,26 @@ public sealed class ListingRun(IListingPort port)
     public void Start(uint itemId, bool fromRetainer, int savedPrice, int stackLimit, double seconds, double now)
     {
         if (Running) return;
-        if (now < restartAfter) { Status = "前回の出品結果を待機中です"; return; }
+        if (now < restartAfter) { Status = L.M("ListingPending"); return; }
         before = port.Read();
-        if (before == null || port.Interference) { Stop("販売リストを開き、他の操作を終了してください"); return; }
-        if (savedPrice is <= 0 or > 999999999 || stackLimit is < 1 or > 9999) { Stop("価格または数量の設定が不正です"); return; }
+        if (before == null || port.Interference) { Stop(L.M("OpenSaleList")); return; }
+        if (savedPrice is <= 0 or > 999999999 || stackLimit is < 1 or > 9999) { Stop(L.M("InvalidPriceQuantity")); return; }
         item = itemId; retainer = fromRetainer; price = savedPrice; limit = stackLimit;
         delay = double.IsFinite(seconds) ? Math.Clamp(seconds, 0.1, 30) : 1.5;
         Completed = 0; State = Stage.Delay; next = now + delay;
-        Status = $"連続出品: 単価{price:N0}ギル / 上限{limit}個";
+        Status = L.M("ListingStart", price, limit);
     }
-    public void Stop(string reason = "連続出品を停止しました")
+    public void Stop(Text? reason = null)
     {
         if (State == Stage.Acknowledge) restartAfter = Math.Max(restartAfter, deadline);
-        State = Stage.Idle; before = null; source = null; Status = reason;
+        State = Stage.Idle; before = null; source = null; Status = reason ?? L.M("ListingStopped");
     }
     public void Tick(double now)
     {
         if (!Running || before == null) return;
         var current = port.Read();
-        if (current == null || !ListingRules.SameSession(before, current)) { Stop("画面・キャラクター・リテイナーが変わったため出品を停止しました"); return; }
-        if (port.Interference) { Stop("別の画面操作を検出したため出品を停止しました"); return; }
+        if (current == null || !ListingRules.SameSession(before, current)) { Stop(L.M("ListingSessionChanged")); return; }
+        if (port.Interference) { Stop(L.M("ListingInterference")); return; }
         if (State == Stage.Acknowledge)
         {
             var added = ListingRules.HasExpectedAddition(before, current, source!, quantity, price);
@@ -115,22 +115,22 @@ public sealed class ListingRun(IListingPort port)
             if (added && removed)
             {
                 Completed++; before = current; source = null; State = Stage.Delay; next = now + delay;
-                Status = $"{Completed}件出品済み / 単価{price:N0}ギル";
+                Status = L.M("ListingProgress", Completed, price);
             }
             else if ((!added && !before.Offers.SequenceEqual(current.Offers)) || (!removed && !before.Stock.SequenceEqual(current.Stock)))
-                Stop("想定外の出品・所持品変更を検出したため停止しました");
-            else if (now >= deadline) Stop("出品結果を確認できず停止しました。再送はしません");
+                Stop(L.M("UnexpectedStock"));
+            else if (now >= deadline) Stop(L.M("ListingTimeout"));
             return;
         }
-        if (!before.Offers.SequenceEqual(current.Offers) || !before.Stock.SequenceEqual(current.Stock)) { Stop("出品・所持品が変更されたため停止しました"); return; }
+        if (!before.Offers.SequenceEqual(current.Offers) || !before.Stock.SequenceEqual(current.Stock)) { Stop(L.M("StockChanged")); return; }
         if (now < next) return;
-        if (State != Stage.Delay && now >= deadline) { Stop("出品画面の操作がタイムアウトしました"); return; }
+        if (State != Stage.Delay && now >= deadline) { Stop(L.M("DialogTimeout")); return; }
         switch (State)
         {
             case Stage.Delay:
-                if (current.Offers.Length >= current.Capacity) { Stop($"出品枠が埋まりました（{Completed}件出品）"); return; }
+                if (current.Offers.Length >= current.Capacity) { Stop(L.M("SlotsFull", Completed)); return; }
                 source = ListingRules.Next(current.Stock, item, retainer, limit);
-                if (source == null) { Stop($"対象アイテムの出品が完了しました（{Completed}件）"); return; }
+                if (source == null) { Stop(L.M("ListingDone", Completed)); return; }
                 quantity = ListingRules.Quantity(source, limit);
                 State = Stage.Menu; deadline = now + 10; next = now + 0.2;
                 port.OpenMenu(source);
@@ -141,7 +141,7 @@ public sealed class ListingRun(IListingPort port)
             case Stage.Dialog:
                 var dialog = port.Dialog(source!);
                 if (dialog == null) return;
-                if (quantity > dialog.MaxQuantity || price > dialog.MaxPrice) { Stop("ゲームの出品可能範囲を超えるため停止しました"); return; }
+                if (quantity > dialog.MaxQuantity || price > dialog.MaxPrice) { Stop(L.M("GameLimit")); return; }
                 dialogAddress = dialog.Address;
                 port.Fill(source!, dialog, quantity, price);
                 State = Stage.Verify; next = now + 0.3;
@@ -149,7 +149,7 @@ public sealed class ListingRun(IListingPort port)
             case Stage.Verify:
                 var ready = port.Dialog(source!);
                 if (ready == null || ready.Address != dialogAddress || ready.Quantity != quantity || ready.Price != price)
-                { Stop("出品価格・数量の一致を確認できないため停止しました"); return; }
+                { Stop(L.M("VerifyFailed")); return; }
                 State = Stage.Acknowledge; deadline = now + 15;
                 port.Confirm(source!, ready, quantity, price);
                 break;

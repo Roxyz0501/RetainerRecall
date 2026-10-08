@@ -77,9 +77,9 @@ internal sealed unsafe class ListingGamePort(IGameGui gui, IPlayerState player, 
     }
     private void ValidateSource(Stock source)
     {
-        if (Read()?.Stock.Contains(source) != true) throw new InvalidOperationException("出品対象のスロットが変わりました");
+        if (Read()?.Stock.Contains(source) != true) throw new LocalizedException(L.M("SourceChanged"));
         var owner = Owner();
-        if (owner == null || (nint)owner != ownerAddress || !owner->IsVisible) throw new InvalidOperationException("元の所持品画面が閉じられました");
+        if (owner == null || (nint)owner != ownerAddress || !owner->IsVisible) throw new LocalizedException(L.M("OwnerClosed"));
     }
     private static bool TargetMatches(Stock source)
     {
@@ -95,7 +95,7 @@ internal sealed unsafe class ListingGamePort(IGameGui gui, IPlayerState player, 
     public void OpenMenu(Stock source)
     {
         ValidateSource(source);
-        if (Visible("ContextMenu") || Visible("RetainerSell")) throw new InvalidOperationException("別のメニューが開かれています");
+        if (Visible("ContextMenu") || Visible("RetainerSell")) throw new LocalizedException(L.M("OtherMenu"));
         AgentInventoryContext.Instance()->OpenForItemSlot((InventoryType)source.Inventory, source.Slot, 0, OwnerAddonId);
         menuAddress = (nint)gui.GetAddonByName<AtkUnitBase>("ContextMenu");
     }
@@ -104,7 +104,7 @@ internal sealed unsafe class ListingGamePort(IGameGui gui, IPlayerState player, 
         ValidateSource(source);
         var menu = gui.GetAddonByName<AtkUnitBase>("ContextMenu");
         if (menu == null || !menu->IsVisible || !menu->IsReady) return false;
-        if ((nint)menu != menuAddress || !TargetMatches(source)) throw new InvalidOperationException("別のアイテムのメニューが開かれました");
+        if ((nint)menu != menuAddress || !TargetMatches(source)) throw new LocalizedException(L.M("WrongItemMenu"));
         var label = data.GetExcelSheet<Addon>().GetRow(99).Text.ToString();
         NativeMenu.Select(menu, label);
         return true;
@@ -115,13 +115,13 @@ internal sealed unsafe class ListingGamePort(IGameGui gui, IPlayerState player, 
         var addon = gui.GetAddonByName<AddonRetainerSell>("RetainerSell");
         if (addon == null || !addon->IsReady || !addon->IsVisible) return null;
         var agent = AgentRetainer.Instance();
-        if (agent == null || (int)agent->SellItemInventoryType != source.Inventory || agent->SellItemInventorySlot != source.Slot || agent->RetainerSellAddonId != addon->Id || addon->Quantity == null || addon->AskingPrice == null || addon->Confirm == null) throw new InvalidOperationException("出品画面と対象アイテムの対応を確認できません");
+        if (agent == null || (int)agent->SellItemInventoryType != source.Inventory || agent->SellItemInventorySlot != source.Slot || agent->RetainerSellAddonId != addon->Id || addon->Quantity == null || addon->AskingPrice == null || addon->Confirm == null) throw new LocalizedException(L.M("SaleDialogMismatch"));
         return new((nint)addon, addon->Quantity->Value, addon->AskingPrice->Value, addon->Quantity->Data.Max, addon->AskingPrice->Data.Max);
     }
     public void Fill(Stock source, SaleDialog dialog, int quantity, int price)
     {
         var current = Dialog(source);
-        if (current == null || current.Address != dialog.Address || quantity <= 0 || quantity > current.MaxQuantity || price <= 0 || price > current.MaxPrice) throw new InvalidOperationException("出品入力の範囲が不正です");
+        if (current == null || current.Address != dialog.Address || quantity <= 0 || quantity > current.MaxQuantity || price <= 0 || price > current.MaxPrice) throw new LocalizedException(L.M("InputRange"));
         var addon = (AddonRetainerSell*)current.Address;
         // Normal numeric-input UI callbacks; no inventory mutation or MoveToRetainerMarket call.
         NativeMenu.Callback((AtkUnitBase*)addon, 3, quantity);
@@ -130,11 +130,11 @@ internal sealed unsafe class ListingGamePort(IGameGui gui, IPlayerState player, 
     public void Confirm(Stock source, SaleDialog dialog, int quantity, int price)
     {
         var current = Dialog(source);
-        if (current == null || current.Address != dialog.Address || current.Price != price || current.Quantity != quantity) throw new InvalidOperationException("出品確定直前の価格・数量が一致しません");
+        if (current == null || current.Address != dialog.Address || current.Price != price || current.Quantity != quantity) throw new LocalizedException(L.M("ConfirmMismatch"));
         var addon = (AddonRetainerSell*)current.Address;
-        if (addon->Confirm->OwnerNode == null || !addon->Confirm->IsEnabled || addon->AtkValuesCount < 9 || addon->AtkValues[5].Int != price || addon->AtkValues[8].Int != quantity) throw new InvalidOperationException("出品ボタンが無効か、表示値と確定値が一致しません");
+        if (addon->Confirm->OwnerNode == null || !addon->Confirm->IsEnabled || addon->AtkValuesCount < 9 || addon->AtkValues[5].Int != price || addon->AtkValues[8].Int != quantity) throw new LocalizedException(L.M("ButtonValues"));
         var agent = AgentRetainer.Instance();
-        if (agent == null || agent->SellItemUnitPrice != price || agent->SellItemQuantity != quantity) throw new InvalidOperationException("ゲーム内部の確定価格・数量が一致しません");
+        if (agent == null || agent->SellItemUnitPrice != price || agent->SellItemQuantity != quantity) throw new LocalizedException(L.M("AgentValues"));
         NativeButton.Click((AtkUnitBase*)addon, addon->Confirm);
     }
 }

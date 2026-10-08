@@ -35,7 +35,7 @@ internal sealed unsafe class ListingService : IDisposable
     private readonly List<PriceCapture> captures = [];
     private sealed record PriceCapture(ListingFrame Before, uint ItemId, int Quantity, int Price, double ConfirmedAt, double Deadline);
     private static double Now => (double)Stopwatch.GetTimestamp() / Stopwatch.Frequency;
-    public string QuantitySource { get; private set; } = "未取得";
+    public Text QuantitySource { get; private set; } = L.M("UnknownQuantity");
     public bool Busy => Run.Running || requested != null;
 
     public ListingService(IDalamudPluginInterface pi, IAddonLifecycle lifecycle, IKeyState keys, IPlayerState player, IClientState client, IGameGui gui, IChatGui chat, IPluginLog log, ICondition condition, IDataManager data, IGameInteropProvider interop, Configuration config, Func<bool> recallBusy)
@@ -47,22 +47,22 @@ internal sealed unsafe class ListingService : IDisposable
         try
         {
             var address = (nint)AgentInventoryContext.MemberFunctionPointers.OpenForItemSlot;
-            if (address == 0) throw new InvalidOperationException("所持品メニューの関数を確認できません");
+            if (address == 0) throw new LocalizedException(L.M("ContextUnavailable"));
             contextHook = interop.HookFromAddress<OpenContextDelegate>(address, ContextOpened);
             contextHook.Enable();
         }
         catch (Exception e)
         {
             contextHook?.Dispose(); contextHook = null;
-            Error("連続出品ショートカットを初期化できません。ログを確認してください", e);
+            Error(L.M("ShortcutInit"), e);
         }
         lifecycle.RegisterListener(AddonEvent.PreReceiveEvent, "RetainerSell", BeforeSellEvent);
         lifecycle.RegisterListener(AddonEvent.PreFinalize, "RetainerSell", SaleClosing);
         lifecycle.RegisterListener(AddonEvent.PreFinalize, "RetainerSellList", ListClosed);
         client.Logout += Logout;
     }
-    private void Logout(int type, int code) { Stop("ログアウトしました"); Prices.Clear(); captures.Clear(); }
-    private void ListClosed(AddonEvent type, AddonArgs args) { Stop("販売リストが閉じたため連続出品を停止しました"); captures.Clear(); }
+    private void Logout(int type, int code) { Stop(L.M("LoggedOut")); Prices.Clear(); captures.Clear(); }
+    private void ListClosed(AddonEvent type, AddonArgs args) { Stop(L.M("ListingClosed")); captures.Clear(); }
     private void ContextOpened(AgentInventoryContext* agent, InventoryType inventory, int slot, int argument, uint owner)
     {
         // PostSetup runs inside this call, before the inventory target may be finalized.
@@ -76,14 +76,14 @@ internal sealed unsafe class ListingService : IDisposable
         {
             if (!port.Visible("RetainerSellList")) return;
             var source = port.ContextSource(inventory, slot, owner);
-            if (source == null) { Error("出品対象を確認できません。販売リストと所持品を開き、アーマリーチェストも一度開いてから再実行してください"); return; }
+            if (source == null) { Error(L.M("SourceUnavailable")); return; }
             Prices.SetCharacter(player.IsLoaded ? player.ContentId : 0);
-            if (!Prices.TryGet(source.ItemId, out _)) { Error("このアイテムはログイン後の出品履歴がありません。先に通常の操作で価格を確定して出品してください"); return; }
+            if (!Prices.TryGet(source.ItemId, out _)) { Error(L.M("NoPrice")); return; }
             requested = source;
             requestedFrame = port.Read();
             log.Information("Listing shortcut accepted for inventory {Inventory}, slot {Slot}", inventory, slot);
         }
-        catch (Exception e) { Error("ショートカットの対象を確認できません", e); }
+        catch (Exception e) { Error(L.M("ShortcutTarget"), e); }
     }
     private bool ModifierHeld() => keys[config.ListingKey switch
     {
@@ -136,11 +136,11 @@ internal sealed unsafe class ListingService : IDisposable
     private bool MarketbuddyLoaded => pi.InstalledPlugins.Any(x => x.InternalName == "Marketbuddy" && x.IsLoaded);
     private int ReadLimit()
     {
-        if (!config.UseMarketbuddyLimit || !MarketbuddyLoaded) { QuantitySource = "本プラグインの数量設定"; return Math.Clamp(config.ListingStackLimit, 1, 9999); }
+        if (!config.UseMarketbuddyLimit || !MarketbuddyLoaded) { QuantitySource = L.M("LocalQuantity"); return Math.Clamp(config.ListingStackLimit, 1, 9999); }
         // The overlay saves both fields on every change. Read only these saved settings; never modify them.
         var path = Path.Combine(pi.ConfigFile.DirectoryName!, "Marketbuddy.json");
         var value = StackLimitPolicy.ReadMarketbuddy(File.ReadAllText(path));
-        QuantitySource = $"Marketbuddy: {value}個（制限オフ時は99個）";
+        QuantitySource = L.M("MarketQuantity", value);
         return value;
     }
     private void LockMarketbuddy()
@@ -148,7 +148,7 @@ internal sealed unsafe class ListingService : IDisposable
         if (!MarketbuddyLoaded) return;
         pi.GetIpcSubscriber<string, bool>("Marketbuddy.Lock").InvokeFunc("RetainerRecall");
         locked = true;
-        if (!pi.GetIpcSubscriber<string, bool>("Marketbuddy.IsLocked").InvokeFunc("RetainerRecall")) throw new InvalidOperationException("Marketbuddyの価格操作を一時停止できません");
+        if (!pi.GetIpcSubscriber<string, bool>("Marketbuddy.IsLocked").InvokeFunc("RetainerRecall")) throw new LocalizedException(L.M("MarketLock"));
     }
     private void UnlockMarketbuddy()
     {
@@ -163,7 +163,7 @@ internal sealed unsafe class ListingService : IDisposable
         {
             var character = player.IsLoaded ? player.ContentId : 0;
             Prices.SetCharacter(character);
-            if (character == 0) { Stop("ログアウトしました"); captures.Clear(); return; }
+            if (character == 0) { Stop(L.M("LoggedOut")); captures.Clear(); return; }
             var frame = captures.Count != 0 || requested != null ? port.Read() : null;
             foreach (var capture in captures.ToArray())
             {
@@ -174,9 +174,9 @@ internal sealed unsafe class ListingService : IDisposable
             if (requested is { } source)
             {
                 requested = null;
-                if (recallBusy()) throw new InvalidOperationException("回収が実行中です");
-                if (port.Visible("RetainerSell")) throw new InvalidOperationException("他プラグインのショートカットと競合しました。別のキーを設定してください");
-                if (frame == null || requestedFrame == null || !ListingRules.SameSession(frame, requestedFrame) || !frame.Stock.Contains(source) || !Prices.TryGet(source.ItemId, out var price)) throw new InvalidOperationException("対象アイテム・リテイナー・保存価格が変わりました");
+                if (recallBusy()) throw new LocalizedException(L.M("RecallBusy"));
+                if (port.Visible("RetainerSell")) throw new LocalizedException(L.M("ShortcutConflict"));
+                if (frame == null || requestedFrame == null || !ListingRules.SameSession(frame, requestedFrame) || !frame.Stock.Contains(source) || !Prices.TryGet(source.ItemId, out var price)) throw new LocalizedException(L.M("RequestChanged"));
                 var limit = ReadLimit();
                 LockMarketbuddy();
                 port.DismissInitialMenu();
@@ -187,15 +187,15 @@ internal sealed unsafe class ListingService : IDisposable
             if (wasRunning && !Run.Running) chat.Print($"[Retainer Listing Helper] {Run.Status}");
             if (!Busy) UnlockMarketbuddy();
         }
-        catch (Exception e) { Error(e.Message, e); }
+        catch (Exception e) { Error(L.From(e), e); }
     }
-    private void Error(string message, Exception? error = null)
+    private void Error(Text message, Exception? error = null)
     {
         Stop(message);
         chat.PrintError($"[Retainer Listing Helper] {message}");
         if (error != null) log.Warning(error, "Listing automation stopped");
     }
-    public void Stop(string message = "連続出品を停止しました") { requested = null; requestedFrame = null; Run.Stop(message); UnlockMarketbuddy(); }
+    public void Stop(Text? message = null) { requested = null; requestedFrame = null; Run.Stop(message); UnlockMarketbuddy(); }
     public void Dispose()
     {
         Stop(); Prices.Clear(); captures.Clear();

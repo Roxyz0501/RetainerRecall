@@ -9,6 +9,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../../NativeButton.cs" Link="NativeButton.cs" />
+    <Compile Include="../../Localization.cs" Link="Localization.cs" />
+    <EmbeddedResource Include="../../Localization/*.json" LogicalName="RetainerRecall.Localization.%(Filename).json" />
     <Reference Include="FFXIVClientStructs" HintPath="$(DalamudLibPath)FFXIVClientStructs.dll" />
     <Reference Include="InteropGenerator.Runtime" HintPath="$(DalamudLibPath)InteropGenerator.Runtime.dll" />
   </ItemGroup>

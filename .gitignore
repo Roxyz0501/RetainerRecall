@@ -5,3 +5,7 @@ Tests/bin/
 Tests/obj/
 Tests/Native/bin/
 Tests/Native/obj/
+Tests/UI/bin/
+Tests/UI/obj/
+Tests/UI/artifacts/
+imgui.ini

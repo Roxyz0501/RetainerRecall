@@ -82,13 +82,13 @@ internal sealed unsafe class GamePort(IGameGui gui, IPlayerState player, IDataMa
     {
         var snapshot = Read();
         if (snapshot == null || !snapshot.Listings.Contains(listing) || IsBusy)
-            throw new InvalidOperationException("回収直前の状態確認に失敗しました");
+            throw new LocalizedException(L.M("RecallValidate"));
     }
     public void OpenRecallMenu(Listing listing)
     {
         Validate(listing);
         var agent = AgentRetainer.Instance();
-        if (agent == null || agent->SellListEntryCount is < 1 or > 20 || agent->RetainerSellListAddonId != Window->Id) throw new InvalidOperationException("販売リストの対応を確認できません");
+        if (agent == null || agent->SellListEntryCount is < 1 or > 20 || agent->RetainerSellListAddonId != Window->Id) throw new LocalizedException(L.M("SellListMismatch"));
         ownedRow = -1;
         for (var row = 0; row < agent->SellListEntryCount; row++)
         {
@@ -96,7 +96,7 @@ internal sealed unsafe class GamePort(IGameGui gui, IPlayerState player, IDataMa
             var itemId = entry.ItemId >= 1000000 ? entry.ItemId - 1000000 : entry.ItemId;
             if (entry.InventorySlot == listing.Slot && itemId == listing.ItemId && entry.Quantity == listing.Quantity) { ownedRow = row; break; }
         }
-        if (ownedRow < 0) throw new InvalidOperationException("出品スロットに対応する販売行がありません");
+        if (ownedRow < 0) throw new LocalizedException(L.M("RowMissing"));
         // Normal sell-list row context-menu callback; row order is not inventory slot order.
         NativeMenu.Callback(Window, 0, ownedRow, 1);
         ownedMenu = (nint)gui.GetAddonByName<AtkUnitBase>("ContextMenu");
@@ -108,10 +108,10 @@ internal sealed unsafe class GamePort(IGameGui gui, IPlayerState player, IDataMa
         if (menu == null || !menu->IsVisible || !menu->IsReady) return false;
         var agent = AgentRetainer.Instance();
         if ((nint)menu != ownedMenu || agent == null || agent->ContextMenuIndex != ownedRow || ownedRow < 0 || ownedRow >= agent->SellListEntryCount || agent->SellListEntries[ownedRow].InventorySlot != listing.Slot)
-            throw new InvalidOperationException("取り下げメニューの対象が変わりました");
+            throw new LocalizedException(L.M("RecallTargetChanged"));
         var context = AgentContext.Instance();
-        if (context == null || context->OwnerAddon != Window->Id) throw new InvalidOperationException("取り下げメニューの所有画面が一致しません");
-        if (!HasSpace(target)) throw new InvalidOperationException("移動先の空きがありません");
+        if (context == null || context->OwnerAddon != Window->Id) throw new LocalizedException(L.M("RecallOwnerChanged"));
+        if (!HasSpace(target)) throw new LocalizedException(L.M("NoSpace"));
         var label = data.GetExcelSheet<Addon>().GetRow(target == Destination.Player ? 976u : 958u).Text.ToString();
         NativeMenu.Select(menu, label);
         return true;

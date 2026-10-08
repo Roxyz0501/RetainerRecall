@@ -7,6 +7,15 @@ namespace RetainerRecall;
 public sealed class Configuration : IPluginConfiguration
 {
     public int Version { get; set; } = 1;
+    public string? Language { get; set; }
+    public bool InitializeLanguage(Func<string?> game, Func<string?> dalamud)
+    {
+        var resolved = L.Resolve(Language, game, dalamud);
+        var changed = Language != resolved;
+        Language = resolved;
+        L.Set(resolved);
+        return changed;
+    }
     public ButtonSettings Player = new();
     public ButtonSettings Retainer = new() { Offset = new(8, 42) };
     public bool EnableListing = true;

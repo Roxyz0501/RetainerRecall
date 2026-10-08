@@ -59,3 +59,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+# Host-provided CJK fonts
+
+Noto Sans CJK, by the Noto project contributors, is used through Dalamud's public managed font atlas and host-provided assets. The font files are not redistributed in this plugin. License: SIL Open Font License 1.1. Source and license: https://github.com/notofonts/noto-cjk
