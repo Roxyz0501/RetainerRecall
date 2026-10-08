@@ -1,6 +1,6 @@
 # Publication state
 
-## 2026-10-08 version 0.2.0.0 preparation
+## 2026-10-08 version 0.2.0.0 publication
 
 - Display name: Retainer Listing Helper; primary command `/retainerlisting`, legacy `/retainerrecall` retained.
 - InternalName, dedicated source/release repository and icon URL remain RetainerRecall for existing updates/configuration.
@@ -11,7 +11,9 @@
 - 81 managed checks passed; isolated settings rendering, new/legacy commands, enable toggle, JSON config roundtrip and command disposal checked. Installed game Addon rows 99/958/976 checked offline.
 - Native in-game listing/recall, shortcut triggering, cross-plugin coexistence and wire-level equivalence remain unverified and disclosed.
 - Optional Marketbuddy integration only; no required external plugin or bundled third-party runtime DLL.
-- Publication and remote ZIP/index verification pending.
+- GitHub release published from source commit `3f85c4c`; anonymous repository/icon HTTP 200 (image/png) and release ZIP verified. Shared index registration complete.
+- ZIP SHA-256: `98E28252C72E2E43F6852C5B7FD5338E129CBB1FB41026D36431D14644D740FA`.
+- Shared commit: `df395dcf0697c2069e7788aa3cc35b01a0f40dc4`; anonymous main and commit-pinned index both verified with new display name/version and four other entries preserved.
 
 Updated: 2026-10-08 JST
 
