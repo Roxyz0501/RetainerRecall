@@ -1,12 +1,13 @@
 # Publication state
 
-## 2026-10-08 version 0.2.0.3 preparation
+## 2026-10-08 version 0.2.0.3 publication
 
 - Removed the floating progress/status window and its settings button at the user's request. Recall buttons remain; settings open via the plugin installer or commands. Status and stop controls remain inside settings, with chat notifications unchanged.
 - No changes to listing/recall execution or native dispatch.
 - Release target: https://github.com/Roxyz0501/RetainerRecall/releases/tag/v0.2.0.3
 - ZIP target: https://github.com/Roxyz0501/RetainerRecall/releases/download/v0.2.0.3/RetainerRecall-0.2.0.3.zip
-- Publication pending Release build, existing UI harness and package checks. Native in-game acceptance remains unverified.
+- Published from source commit `341c6ee`. Clean Release build and five existing UI harness checks passed. Public source/icon HTTP 200, image/png and downloaded ZIP hash/manifest verified. SHA-256 `67D4CAFCDC133732BF42D2A997B7F96C779A672B5CFDA2DD282B75A7F00C1C8E`. Native in-game acceptance remains unverified.
+- Shared registration `d5d7d29a19961b54ddd578860fb14fcc076f6f21` verified at the anonymous commit-pinned URL with six entries. Normal main URL still returned cached 0.2.0.2 at verification, including after no-cache revalidation; installer visibility may be delayed by CDN caching.
 
 ## 2026-10-08 version 0.2.0.2 publication
 
