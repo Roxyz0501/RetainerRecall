@@ -1,6 +1,6 @@
 # Publication state
 
-## 2026-10-08 version 0.2.0.1 preparation
+## 2026-10-08 version 0.2.0.1 publication
 
 - Delay range lowered to 0.1–30 seconds for listing and recall; acknowledgement and UI transition waits retained.
 - Player-side listing scans bags and all 11 supported armoury equipment compartments, and can start from either. Equipped items and soul crystals remain excluded.
@@ -9,7 +9,8 @@
 - Release target: https://github.com/Roxyz0501/RetainerRecall/releases/tag/v0.2.0.1
 - ZIP target: https://github.com/Roxyz0501/RetainerRecall/releases/download/v0.2.0.1/RetainerRecall-0.2.0.1.zip
 - Clean Release build (zero warnings/errors), 90 managed checks and five isolated UI/command/persistence checks passed. Native in-game hook/armoury behavior remains unverified.
-- Classification, author, optional dependencies, original icon and third-party notices retained. Publication pending.
+- Published from source commit `8c70bb1`. Classification, author, optional dependencies, original icon and third-party notices retained. Public repository/icon HTTP 200 and image/png verified; downloaded ZIP matches SHA-256 `7A43B67D03354E02882B22EE527A62F5D397A5FB9CA695AFDB23058469C9273B`.
+- Anonymous commit-pinned and normal main shared index verified at registration commit `98d10e097dcd96852f744340d9d9afbef1172f9d`; six entries, with all five other plugins preserved.
 
 ## 2026-10-08 version 0.2.0.0 publication
 
