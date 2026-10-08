@@ -1,5 +1,13 @@
 # Publication state
 
+## 2026-10-08 version 0.2.0.3 preparation
+
+- Removed the floating progress/status window and its settings button at the user's request. Recall buttons remain; settings open via the plugin installer or commands. Status and stop controls remain inside settings, with chat notifications unchanged.
+- No changes to listing/recall execution or native dispatch.
+- Release target: https://github.com/Roxyz0501/RetainerRecall/releases/tag/v0.2.0.3
+- ZIP target: https://github.com/Roxyz0501/RetainerRecall/releases/download/v0.2.0.3/RetainerRecall-0.2.0.3.zip
+- Publication pending Release build, existing UI harness and package checks. Native in-game acceptance remains unverified.
+
 ## 2026-10-08 version 0.2.0.2 publication
 
 - User-reported native crash traced to ListingGamePort.Confirm -> AddonRetainerSell.ReceiveEvent. The fifth argument (AtkEventData) was omitted; native access violation read address 7, consistent with the null input's modifier byte.

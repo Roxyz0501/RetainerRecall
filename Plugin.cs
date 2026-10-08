@@ -104,18 +104,6 @@ public sealed unsafe class Plugin : IDalamudPlugin
             var anchor = ImGui.GetMainViewport().Pos + new Vector2(window->X, window->Y + window->GetScaledHeight(true));
             DrawButton(Destination.Player, config.Player, anchor);
             DrawButton(Destination.Retainer, config.Retainer, anchor);
-            if (run.Running || run.Status != "待機中" || listing.Busy || listing.Run.Status != "連続出品: 待機中")
-            {
-                ImGui.SetNextWindowPos(anchor + new Vector2(8, 82), ImGuiCond.Always);
-                if (ImGui.Begin("##RetainerRecallProgress", ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoSavedSettings))
-                {
-                    ImGui.TextUnformatted(run.Status);
-                    ImGui.TextUnformatted(listing.Run.Status);
-                    if ((run.Running || listing.Busy) && ImGui.Button("停止")) stopRequested = true;
-                    if (ImGui.Button("設定")) settings = true;
-                }
-                ImGui.End();
-            }
         }
         if (!settings) return;
         ImGui.SetNextWindowSize(new(540, 430), ImGuiCond.FirstUseEver);
