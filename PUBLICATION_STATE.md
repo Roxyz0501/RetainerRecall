@@ -1,5 +1,18 @@
 # Publication state
 
+## 2026-10-08 version 0.2.0.0 preparation
+
+- Display name: Retainer Listing Helper; primary command `/retainerlisting`, legacy `/retainerrecall` retained.
+- InternalName, dedicated source/release repository and icon URL remain RetainerRecall for existing updates/configuration.
+- Adds session-only, item-ID keyed final listing prices (NQ/HQ shared), configurable modifier + right-click, delayed batch listing and optional Marketbuddy quantity-setting reads/IPC locking.
+- Listing and recall now both use ordinary enabled context-menu entries. Direct market movement calls removed.
+- Release target: https://github.com/Roxyz0501/RetainerRecall/releases/tag/v0.2.0.0
+- ZIP target: https://github.com/Roxyz0501/RetainerRecall/releases/download/v0.2.0.0/RetainerRecall-0.2.0.0.zip
+- 81 managed checks passed; isolated settings rendering, new/legacy commands, enable toggle, JSON config roundtrip and command disposal checked. Installed game Addon rows 99/958/976 checked offline.
+- Native in-game listing/recall, shortcut triggering, cross-plugin coexistence and wire-level equivalence remain unverified and disclosed.
+- Optional Marketbuddy integration only; no required external plugin or bundled third-party runtime DLL.
+- Publication and remote ZIP/index verification pending.
+
 Updated: 2026-10-08 JST
 
 - Classification: new standalone plugin, explicitly selected by the user at task start.

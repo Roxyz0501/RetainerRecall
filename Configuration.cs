@@ -9,7 +9,14 @@ public sealed class Configuration : IPluginConfiguration
     public int Version { get; set; } = 1;
     public ButtonSettings Player = new();
     public ButtonSettings Retainer = new() { Offset = new(8, 42) };
+    public bool EnableListing = true;
+    public ListingKey ListingKey = ListingKey.RightAlt;
+    public float ListingDelaySeconds = 1.5f;
+    public bool UseMarketbuddyLimit = true;
+    public int ListingStackLimit = 99;
 }
+
+public enum ListingKey { RightAlt, LeftAlt, RightControl, LeftControl, RightShift, LeftShift }
 
 [Serializable]
 public sealed class ButtonSettings

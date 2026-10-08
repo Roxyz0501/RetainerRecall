@@ -1,16 +1,20 @@
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
+using Lumina.Excel.Sheets;
 
 namespace RetainerRecall;
 
-internal sealed unsafe class GamePort(IGameGui gui, IPlayerState player) : IRecallPort
+internal sealed unsafe class GamePort(IGameGui gui, IPlayerState player, IDataManager data) : IRecallPort
 {
+    private nint ownedMenu;
+    private int ownedRow = -1;
     private static readonly InventoryType[] PlayerBags = [InventoryType.Inventory1, InventoryType.Inventory2, InventoryType.Inventory3, InventoryType.Inventory4];
     private static readonly InventoryType[] RetainerBags = [InventoryType.RetainerPage1, InventoryType.RetainerPage2, InventoryType.RetainerPage3, InventoryType.RetainerPage4, InventoryType.RetainerPage5, InventoryType.RetainerPage6, InventoryType.RetainerPage7];
     public AtkUnitBase* Window => gui.GetAddonByName<AtkUnitBase>("RetainerSellList");
     public bool IsBusy => new[] { "ContextMenu", "InventoryContext", "SelectYesno", "InputNumeric", "RetainerSell", "SelectString" }
-        .Any(name => { var addon = gui.GetAddonByName<AtkUnitBase>(name); return addon != null && addon->IsVisible; });
+        .Any(name => { var addon = gui.GetAddonByName<AtkUnitBase>(name); return addon != null && addon->IsVisible && !(name == "ContextMenu" && (nint)addon == ownedMenu); });
 
     public Snapshot? Read()
     {
@@ -73,17 +77,43 @@ internal sealed unsafe class GamePort(IGameGui gui, IPlayerState player) : IReca
         return count;
     }
 
-    public void Move(Destination target, Listing listing)
+    private void Validate(Listing listing)
     {
-        // Validate again at the native boundary. Never construct packets or write inventory memory.
         var snapshot = Read();
-        if (snapshot == null || !snapshot.Listings.Contains(listing) || IsBusy || !HasSpace(target))
+        if (snapshot == null || !snapshot.Listings.Contains(listing) || IsBusy)
             throw new InvalidOperationException("回収直前の状態確認に失敗しました");
-        var manager = InventoryManager.Instance();
-        if (target == Destination.Player)
-            manager->MoveFromRetainerMarketToPlayerInventory(InventoryType.RetainerMarket, checked((ushort)listing.Slot), checked((uint)listing.Quantity));
-        else
-            manager->MoveFromRetainerMarketToRetainerInventory(InventoryType.RetainerMarket, checked((ushort)listing.Slot), checked((uint)listing.Quantity));
-        // Return-code semantics are not assumed; source removal plus destination increment is the acknowledgement.
     }
+    public void OpenRecallMenu(Listing listing)
+    {
+        Validate(listing);
+        var agent = AgentRetainer.Instance();
+        if (agent == null || agent->SellListEntryCount is < 1 or > 20 || agent->RetainerSellListAddonId != Window->Id) throw new InvalidOperationException("販売リストの対応を確認できません");
+        ownedRow = -1;
+        for (var row = 0; row < agent->SellListEntryCount; row++)
+        {
+            var entry = agent->SellListEntries[row];
+            var itemId = entry.ItemId >= 1000000 ? entry.ItemId - 1000000 : entry.ItemId;
+            if (entry.InventorySlot == listing.Slot && itemId == listing.ItemId && entry.Quantity == listing.Quantity) { ownedRow = row; break; }
+        }
+        if (ownedRow < 0) throw new InvalidOperationException("出品スロットに対応する販売行がありません");
+        // Normal sell-list row context-menu callback; row order is not inventory slot order.
+        NativeMenu.Callback(Window, 0, ownedRow, 1);
+        ownedMenu = (nint)gui.GetAddonByName<AtkUnitBase>("ContextMenu");
+    }
+    public bool SelectRecall(Destination target, Listing listing)
+    {
+        Validate(listing);
+        var menu = gui.GetAddonByName<AtkUnitBase>("ContextMenu");
+        if (menu == null || !menu->IsVisible || !menu->IsReady) return false;
+        var agent = AgentRetainer.Instance();
+        if ((nint)menu != ownedMenu || agent == null || agent->ContextMenuIndex != ownedRow || ownedRow < 0 || ownedRow >= agent->SellListEntryCount || agent->SellListEntries[ownedRow].InventorySlot != listing.Slot)
+            throw new InvalidOperationException("取り下げメニューの対象が変わりました");
+        var context = AgentContext.Instance();
+        if (context == null || context->OwnerAddon != Window->Id) throw new InvalidOperationException("取り下げメニューの所有画面が一致しません");
+        if (!HasSpace(target)) throw new InvalidOperationException("移動先の空きがありません");
+        var label = data.GetExcelSheet<Addon>().GetRow(target == Destination.Player ? 976u : 958u).Text.ToString();
+        NativeMenu.Select(menu, label);
+        return true;
+    }
+    public void ResetMenu() { ownedMenu = 0; ownedRow = -1; }
 }

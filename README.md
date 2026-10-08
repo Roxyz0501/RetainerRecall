@@ -1,45 +1,69 @@
-# Retainer Recall
+# Retainer Listing Helper
 
 Author: **Roxyz0501** · Dalamud API 15 · .NET 10 · Windows x64
 
-リテイナーの販売リスト左下に、出品中のアイテムを一括で回収する2つのボタンを追加します。
+リテイナーの連続出品と出品取り下げを補助します。旧名はRetainer Recallです。既存インストールの更新・設定を維持するため、InternalNameと専用リポジトリ名は`RetainerRecall`のままです。
 
-- **すべて所持品に戻す**: プレイヤーの所持品へ回収。
-- **すべてリテイナーに戻す**: 現在のリテイナーの所持品へ回収。
-- `/retainerrecall`: 各ボタンの表示オン・オフ、待機秒数（0.5～30秒、初期値1.5秒）、販売リスト左下からのX/Y位置を設定。
-- `/retainerrecall stop` または実行中の「停止」ボタンで停止。
+## 連続出品
+
+1. ログイン後、対象アイテムを通常の操作で一度出品し、価格を確定します。出品一覧への反映を確認すると、そのアイテムの単価を記憶します。
+2. 販売リストを開き、対象アイテムを**右Alt＋右クリック**します。
+3. 同じ所持品側（プレイヤーまたは現在のリテイナー）の同種アイテムを、保存単価で出品枠が埋まるか在庫がなくなるまで1件ずつ出品します。
+
+価格は**NQ/HQ共通**で、両方が連続出品の対象です。NQ/HQのスタック自体を混ぜたり、所持品のスタックを結合したりはしません。上限数量を満たすスタックを優先し、足りなければそのスタックの端数、スタック不可なら1個を出品します。通常の所持品ページが対象で、アーマリーチェストからの開始には対応していません。
+
+記憶するのは最後に確定して出品一覧に反映された単価です。入力だけ・キャンセルだけでは保存しません。既存の出品を眺めただけでは履歴に取り込みません。価格履歴はメモリのみで、ログアウト・キャラクター変更・プラグインの再読み込みで消えます。履歴がないアイテムではチャットにエラーを表示し、出品しません。
+
+## 数量・キー・ディレイ
+
+`/retainerlisting` で設定を開きます。
+
+- 操作キー: 初期値は右Alt。左右のAlt/Ctrl/Shiftから選択し、右クリックと組み合わせます。他プラグインと同じショートカットは避けてください。Ctrl入力をプラグインから合成することはありません。
+- 出品ディレイ: 0.5～30秒、初期値1.5秒。開始前と、1件の反映を確認してから次の出品までに適用します。
+- 標準数量上限: 初期値99個。
+- Marketbuddyの数量設定参照: 初期値オン。販売リスト上の **Limit stack size to ... items** はMarketbuddyの設定です。有効なMarketbuddyで数量制限オンならその値、数量制限オフなら99個、未導入・無効または参照オフなら本プラグインの標準値を使います。実行開始時に保存済みの`UseMaxStackSize`と`MaximumStackSize`のみを読み取ります。読取失敗時は推測で続行せず停止します。
+
+Marketbuddy使用中は、連続出品の間だけ公開IPCで価格自動操作を一時停止し、終了時に解除します。設定ファイルは書き換えません。AutoRetainerは必須ではありません。
+
+## 出品取り下げ
+
+販売リスト左下の**すべて所持品に戻す**・**すべてリテイナーに戻す**で取り下げできます。「出品回収」タブで、各ボタンの表示・ディレイ・X/Y位置を設定します。
+
+0.2.0.0から、販売リストの対象行の通常メニューを開き、有効な「自分の所持品に戻す」「リテイナー所持品に戻す」を選ぶ方式です。回収用関数の直接呼び出しを廃止しました。移動先に空き枠が1つ以上必要です。スタックの空きだけでは続行しません。所持品が未読込なら一度その所持品を開いてください。
+
+`/retainerlisting stop` または「停止」で中止できます。旧コマンド`/retainerrecall`も互換用に残っています。
+
+## 操作経路と検証状況
+
+- 出品: 所持品の通常コンテキストメニュー → 有効な「マーケットに出品する」 → 数量・単価のUI入力 → 表示値と内部の確定値の照合 → 実際に登録された出品ボタンのクリックイベント。
+- 取り下げ: 販売行と出品スロットを照合 → 行の通常コンテキストメニュー → 有効な取り下げ先を選択。
+- 双方とも1件ずつ、出品一覧と所持品の両方の変更を確認してから続行します。確定操作の再送はしません。
+- 対象や価格・数量の不一致、別画面、キャラクター・リテイナー変更、空き不足、確認待ちタイムアウトで停止します。実行中は手動操作や他の自動化を併用しないでください。停止前に確定済みの1件は完了する場合があります。
+
+独自パケットの生成・送信、ネットワークフック、所持品データの書き換え、出品・回収用InventoryManager関数の直接呼び出しは行いません。ゲームのUI処理を使用します。ただし、手動操作との通信の完全一致やゲーム更新後の互換性を保証するものではありません。
+
+**ゲーム内の出品・取り下げ、右Alt判定、他プラグインとの同時動作は未検証です。** クリーンReleaseビルド、81項目の管理コードテスト、隔離ImGui環境での設定画面・新旧コマンド・設定保存を確認しています。まず少数のアイテムで動作を確認してください。
 
 ## インストール
 
-Dalamudのカスタムプラグインリポジトリへ以下を追加し、**Retainer Recall** をインストールしてください。
+既存の共有カスタムリポジトリで **Retainer Listing Helper** を検索してください。旧Retainer Recallから更新できます。
 
 `https://raw.githubusercontent.com/Roxyz0501/DalamudPluginRepo/main/repo.json`
 
-## 動作と制限
-
-初期公開版です。Releaseビルドと独立した回収状態機械のテストを実施していますが、ゲーム内のネイティブ操作・配置・実際の回収は未検証です。
-
-1. リテイナーの販売リストを開き、移動先のボタンを押します。
-2. 設定秒数後、実在する出品スロット1件をゲームの標準回収関数へ渡します。
-3. 出品からの削除と移動先の数量増加を両方確認し、設定秒数を待って次へ進みます。
-
-移動先に空き枠を1つ以上確保してください。スタックに空きがあっても空き枠が0なら停止する保守的な仕様です。所持品データが未読込の場合も停止します。その場合はリテイナーの所持品を一度開いてから販売リストに戻ってください。通常の所持品ページとクリスタル収納の数量を回収確認の対象とします。
-
-実行中は手動操作や他の自動化を併用しないでください。販売リストを閉じる、リテイナーやキャラクターを変更する、別メニューを開く、出品内容が変わる、15秒以内に回収結果を確認できない場合は停止します。自動再試行は行いません。停止前にゲームへ渡した1件は完了する場合があります。
-
-独自パケットの生成・送信、ネットワークフック、所持品データの書き換えは行いません。FFXIVClientStructsに公開された `InventoryManager.MoveFromRetainerMarketToPlayerInventory` / `MoveFromRetainerMarketToRetainerInventory` を使用します。通信自体はゲームの通常処理に委ねます。ゲーム更新による互換性やサーバー側受理を保証するものではありません。
-
 ## 開発・参照元
 
-このプロジェクトはユーザー指定により**新規独立プラグイン**として開始しました。既存プラグインのリポジトリをコピーして作成したものではありません。
+ユーザー指定の新規独立プラグインとして開発しています。第三者の実装・APIの著作者は各プロジェクトです。
 
-- [Dalamud](https://github.com/goatcorp/Dalamud): goatcorp and contributors、AGPL-3.0。ホストAPI、設定保存、UI、ライフサイクルを使用。ホストDLLは同梱しません。
-- [FFXIVClientStructs](https://github.com/aers/FFXIVClientStructs): aers and contributors、MIT。出品・所持品・リテイナーの構造体定義と既存の回収関数を参照・使用。ライブラリはDalamudが提供し、同梱しません。
-- [Marketbuddy](https://github.com/PunishXIV/Marketbuddy): Chalkos、NightmareXIV and contributors、Apache-2.0。販売リスト追従オーバーレイの挙動を調査。コードのコピーはしていません。詳細はTHIRD-PARTY-NOTICES.md。
+- [AutoRetainer](https://github.com/PunishXIV/AutoRetainer): NightmareXIV、kawaii and contributors、BSD-3-Clause。`QuickSellItems`の「通常メニューを開き、有効な出品項目を選ぶ」経路を参照。リポジトリやフック実装のコピーはしていません。
+- [ECommons](https://github.com/NightmareXIV/ECommons): NightmareXIV and contributors、MIT。ContextMenu/RetainerSellのUIコールバック仕様、ネイティブ項目・有効状態の判定、ボタンイベント経路を参考に適応しています。MIT通知を同梱します。
+- [Marketbuddy](https://github.com/PunishXIV/Marketbuddy): Chalkos、NightmareXIV and contributors、Apache-2.0。販売リスト上の数量設定の項目名・保存動作と、Lock/Unlock/IsLocked IPC契約を参照・使用します。
+- [Dagobert](https://github.com/SHOEGAZEssb/Dagobert): SHOEGAZEssb and contributors、AGPL-3.0。販売リストの行からメニューを開くUIコールバック契約を確認する参考資料として参照。実装コードはコピー・同梱していません。
+- [FFXIVClientStructs](https://github.com/aers/FFXIVClientStructs): aers and contributors、MIT。ゲームのUI・所持品・リテイナー構造体定義とUI呼び出しを使用。ホスト提供のライブラリを使用しDLLは同梱しません。
+- [Dalamud](https://github.com/goatcorp/Dalamud): goatcorp and contributors、AGPL-3.0。ホストAPI、UI、ライフサイクルを使用。DLLは同梱しません。
 
-`dotnet build -c Release` / `dotnet run --project Tests -c Release`
+`dotnet build -c Release` / `dotnet run --project Tests -c Release` / `./package.ps1`
 
-アイコンは本プロジェクト向けのオリジナル生成画像です。第三者・ゲームのアートワークは使用していません。
+アイコンは本プロジェクト用のオリジナル生成画像です。第三者・ゲームのアートワークは使用していません。
 
 ## 支援
 
