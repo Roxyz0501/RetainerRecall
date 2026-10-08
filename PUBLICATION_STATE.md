@@ -13,7 +13,7 @@
 - Optional Marketbuddy integration only; no required external plugin or bundled third-party runtime DLL.
 - GitHub release published from source commit `3f85c4c`; anonymous repository/icon HTTP 200 (image/png) and release ZIP verified. Shared index registration complete.
 - ZIP SHA-256: `98E28252C72E2E43F6852C5B7FD5338E129CBB1FB41026D36431D14644D740FA`.
-- Shared commit: `df395dcf0697c2069e7788aa3cc35b01a0f40dc4`; anonymous main and commit-pinned index both verified with new display name/version and four other entries preserved.
+- Shared commit: `df395dcf0697c2069e7788aa3cc35b01a0f40dc4`; anonymous commit-pinned and normal main index verified with new display name/version and four other entries preserved. The normal URL initially returned cached 0.1.0.0; after revalidation, an ordinary request without extra headers also returned 0.2.0.0.
 
 Updated: 2026-10-08 JST
 
