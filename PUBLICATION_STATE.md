@@ -1,5 +1,15 @@
 # Publication state
 
+## 2026-10-08 version 0.2.0.2 preparation
+
+- User-reported native crash traced to ListingGamePort.Confirm -> AddonRetainerSell.ReceiveEvent. The fifth argument (AtkEventData) was omitted; native access violation read address 7, consistent with the null input's modifier byte.
+- NativeButton now supplies fully initialized input data for the registered ButtonClick event. Button owner null checks precede IsEnabled dereferences.
+- Added 12 isolated native ABI boundary checks. An isolated copy with the previous omitted argument fails the new regression test; the corrected implementation passes. Existing 90 managed checks pass.
+- No raw crash logs, dumps, item details, machine identifiers or local paths are included in publication.
+- Release target: https://github.com/Roxyz0501/RetainerRecall/releases/tag/v0.2.0.2
+- ZIP target: https://github.com/Roxyz0501/RetainerRecall/releases/download/v0.2.0.2/RetainerRecall-0.2.0.2.zip
+- Corrected in-game operation remains unverified. Full-armoury recall issue remains unresolved. Publication pending final Release build and package verification.
+
 ## 2026-10-08 version 0.2.0.1 publication
 
 - Delay range lowered to 0.1–30 seconds for listing and recall; acknowledgement and UI transition waits retained.

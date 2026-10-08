@@ -132,17 +132,9 @@ internal sealed unsafe class ListingGamePort(IGameGui gui, IPlayerState player, 
         var current = Dialog(source);
         if (current == null || current.Address != dialog.Address || current.Price != price || current.Quantity != quantity) throw new InvalidOperationException("出品確定直前の価格・数量が一致しません");
         var addon = (AddonRetainerSell*)current.Address;
-        if (!addon->Confirm->IsEnabled || addon->Confirm->OwnerNode == null || addon->AtkValuesCount < 9 || addon->AtkValues[5].Int != price || addon->AtkValues[8].Int != quantity) throw new InvalidOperationException("出品ボタンが無効か、表示値と確定値が一致しません");
+        if (addon->Confirm->OwnerNode == null || !addon->Confirm->IsEnabled || addon->AtkValuesCount < 9 || addon->AtkValues[5].Int != price || addon->AtkValues[8].Int != quantity) throw new InvalidOperationException("出品ボタンが無効か、表示値と確定値が一致しません");
         var agent = AgentRetainer.Instance();
         if (agent == null || agent->SellItemUnitPrice != price || agent->SellItemQuantity != quantity) throw new InvalidOperationException("ゲーム内部の確定価格・数量が一致しません");
-        // Dispatch the actual registered click event instead of inventing an event number.
-        var evt = addon->Confirm->OwnerNode->AtkEventManager.Event;
-        for (var i = 0; evt != null && i < 32; i++, evt = evt->NextEvent)
-        {
-            if (evt->State.EventType != AtkEventType.ButtonClick || evt->Listener != (AtkEventListener*)addon) continue;
-            addon->ReceiveEvent(evt->State.EventType, (int)evt->Param, evt);
-            return;
-        }
-        throw new InvalidOperationException("出品ボタンの通常クリックイベントが見つかりません");
+        NativeButton.Click((AtkUnitBase*)addon, addon->Confirm);
     }
 }

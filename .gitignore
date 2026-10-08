@@ -3,3 +3,5 @@ obj/
 dist/
 Tests/bin/
 Tests/obj/
+Tests/Native/bin/
+Tests/Native/obj/

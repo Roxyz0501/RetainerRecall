@@ -4,6 +4,10 @@ Author: **Roxyz0501** · Dalamud API 15 · .NET 10 · Windows x64
 
 リテイナーの連続出品と出品取り下げを補助します。旧名はRetainer Recallです。既存インストールの更新・設定を維持するため、InternalNameと専用リポジトリ名は`RetainerRecall`のままです。
 
+## 0.2.0.2 クラッシュ修正
+
+旧版の自動出品確定処理は、クリックイベントの入力データを省略しており、ゲーム内でアクセス違反を起こす不備がありました。0.2.0.2で初期化済みの入力データを渡すよう修正しました。ネイティブ呼び出し境界の回帰テスト12項目と、旧実装でテストが失敗することを確認済みです。修正後のゲーム内実動作は未確認です。
+
 ## 連続出品
 
 1. ログイン後、対象アイテムを通常の操作で一度出品し、価格を確定します。出品一覧への反映を確認すると、そのアイテムの単価を記憶します。
@@ -46,7 +50,7 @@ Marketbuddy使用中は、連続出品の間だけ公開IPCで価格自動操作
 
 独自パケットの生成・送信、ネットワークフック、所持品データの書き換え、出品・回収用InventoryManager関数の直接呼び出しは行いません。ゲームのUI処理を使用します。ただし、手動操作との通信の完全一致やゲーム更新後の互換性を保証するものではありません。
 
-**ゲーム内の出品・取り下げ、右Alt判定、他プラグインとの同時動作は未検証です。** クリーンReleaseビルド、81項目の管理コードテスト、隔離ImGui環境での設定画面・新旧コマンド・設定保存を確認しています。まず少数のアイテムで動作を確認してください。
+**修正後のゲーム内出品・取り下げ、他プラグインとの同時動作は未検証です。** 0.2.0.1ではショートカットから確定処理まで到達した後、上記の入力データ欠落によりクラッシュしました。0.2.0.2はクリーンReleaseビルド、90項目の管理コードテスト、12項目のネイティブ呼び出し境界テストを確認しています。設定画面・新旧コマンド・設定保存は隔離ImGui環境でも確認済みです。
 
 ## インストール
 
@@ -65,7 +69,7 @@ Marketbuddy使用中は、連続出品の間だけ公開IPCで価格自動操作
 - [FFXIVClientStructs](https://github.com/aers/FFXIVClientStructs): aers and contributors、MIT。ゲームのUI・所持品・リテイナー構造体定義とUI呼び出しを使用。ホスト提供のライブラリを使用しDLLは同梱しません。
 - [Dalamud](https://github.com/goatcorp/Dalamud): goatcorp and contributors、AGPL-3.0。ホストAPI、UI、ライフサイクルを使用。DLLは同梱しません。
 
-`dotnet build -c Release` / `dotnet run --project Tests -c Release` / `./package.ps1`
+`dotnet build -c Release` / `dotnet run --project Tests -c Release` / `dotnet run --project Tests/Native -c Release` / `./package.ps1`
 
 アイコンは本プロジェクト用のオリジナル生成画像です。第三者・ゲームのアートワークは使用していません。
 
