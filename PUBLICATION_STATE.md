@@ -1,11 +1,15 @@
 # Publication state
 
-## 2026-10-08 version 0.3.0.0 publication in progress
+## 2026-10-08 version 0.3.0.0 published
 
 - User authorized publishing completed localization work. Scope is the reviewed seven-language implementation and tests; listing/recall dispatch is unchanged. No CSV/data-exchange exporter exists in this plugin.
 - Release target: https://github.com/Roxyz0501/RetainerRecall/releases/tag/v0.3.0.0
 - ZIP target: https://github.com/Roxyz0501/RetainerRecall/releases/download/v0.3.0.0/RetainerRecall-0.3.0.0.zip
 - Shared repository and root publication state are maintained by the coordinating task and are not modified here.
+- Source commit: `fcb166c367148e53e55c69ddd7dac3842b1c9ee0`. Published non-draft Release with ZIP asset; source main pushed.
+- Fresh clean Release rebuild passed with zero warnings/errors. 149 managed checks, 12 native boundary checks and 20 font/UI checks passed. Reviewed source contains no private settings, secrets or machine paths; generated artifacts excluded. Host libraries/fonts are not bundled and third-party notices are retained.
+- Anonymous RepoUrl and IconUrl HTTP 200 verified; icon content type image/png. Downloaded public ZIP matches SHA-256 `D515D0DAC1C3B4835DA699E43EA266620D43210B85C1359E7CE72F7F003A634B`. Manifest version/identity/RepoUrl/IconUrl and seven embedded DLL language resources verified.
+- Release notes disclose unverified in-game rendering/operation and unresolved full-armoury retrieval stop. Shared index registration is pending coordination.
 
 ## 2026-10-08 version 0.3.0.0 local localization preparation (not published)
 
