@@ -30,6 +30,10 @@ static class ListingTests
         check(ListingRules.Quantity(full, 2) == 2, "Marketbuddy limit of two");
         check(ListingRules.Quantity(full with { StackSize = 1, Quantity = 1 }, 99) == 1, "nonstackable quantity one");
         check(ListingRules.Next([full, full with { Inventory = 10000 }], 100, true, 99)?.Inventory == 10000, "retainer inventory scope");
+        var bagGear = new Stock(0, 0, 100, 0, 1, 1);
+        var armouryGear = new Stock(3202, 5, 100, 1, 1, 1);
+        check(ListingRules.Next([armouryGear], 100, false, 99) == armouryGear, "player search includes armoury equipment");
+        check(ListingRules.Next([armouryGear], 100, true, 99) == null, "retainer search excludes player armoury");
 
         (PostingPort port, ListingRun run) Create()
         {
@@ -57,6 +61,20 @@ static class ListingTests
         check(p.Confirms == 2 && p.Quantity == 21, "automatically lists remaining partial stack");
         p.Frame = p.Frame with { Offers = [..p.Frame.Offers, new(1, 100, 0, 21, 275)], Stock = [] }; r.Tick(5.3); r.Tick(6.4);
         check(!r.Running && r.Completed == 2, "complete when all matching items are exhausted");
+
+        (p, r) = Create(); r.Start(100, false, 275, 99, 0, 0);
+        r.Tick(0.09); check(p.Opens == 0, "listing minimum delay enforced");
+        r.Tick(0.1); check(p.Opens == 1 && p.Selects == 0, "listing supports 0.1 second delay with menu wait");
+        r.Tick(0.31); r.Tick(0.52); r.Tick(0.83); r.Tick(0.94);
+        check(p.Confirms == 1 && p.Opens == 1 && r.State == ListingRun.Stage.Acknowledge, "minimum delay still waits for acknowledgement without retry");
+
+        (p, r) = Create(); p.Frame = p.Frame! with { Stock = [bagGear, armouryGear] }; Start(r); Send(r);
+        check(p.LastSource == bagGear && p.Quantity == 1, "equipment listing begins with player bag item");
+        p.Frame = p.Frame with { Stock = [armouryGear], Offers = [new(0, 100, 0, 1, 275)] }; r.Tick(2.1);
+        r.Tick(3.2); r.Tick(3.5); r.Tick(3.8); r.Tick(4.2);
+        check(p.LastSource == armouryGear && p.Confirms == 2 && p.Quantity == 1, "batch continues into armoury with shared HQ price");
+        p.Frame = p.Frame with { Stock = [], Offers = [..p.Frame.Offers, new(1, 100, 1, 1, 275)] }; r.Tick(4.3); r.Tick(5.4);
+        check(!r.Running && r.Completed == 2, "armoury listing waits for source and market updates");
 
         (p, r) = Create(); p.Frame = p.Frame! with { Capacity = 1, Offers = [new(0, 500, 0, 1, 50)] }; Start(r); r.Tick(1);
         check(!r.Running && p.Opens == 0, "full listing slots prevent opening a menu");
@@ -98,8 +116,9 @@ static class ListingTests
         public int Opens, Selects, Fills, Confirms, Quantity, Price;
         public int MaxQuantity = 999, MaxPrice = 999999999;
         public bool MenuReady = true, DialogReady = true;
+        public Stock? LastSource;
         public ListingFrame? Read() => Frame;
-        public void OpenMenu(Stock source) => Opens++;
+        public void OpenMenu(Stock source) { LastSource = source; Opens++; }
         public bool SelectSale(Stock source) { if (!MenuReady) return false; Selects++; return true; }
         public SaleDialog? Dialog(Stock source) => DialogReady ? new(1, Quantity, Price, MaxQuantity, MaxPrice) : null;
         public void Fill(Stock source, SaleDialog dialog, int quantity, int price) { Quantity = quantity; Price = price; Fills++; }

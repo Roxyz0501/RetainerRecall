@@ -10,8 +10,6 @@ internal sealed unsafe class GamePort(IGameGui gui, IPlayerState player, IDataMa
 {
     private nint ownedMenu;
     private int ownedRow = -1;
-    private static readonly InventoryType[] PlayerBags = [InventoryType.Inventory1, InventoryType.Inventory2, InventoryType.Inventory3, InventoryType.Inventory4];
-    private static readonly InventoryType[] RetainerBags = [InventoryType.RetainerPage1, InventoryType.RetainerPage2, InventoryType.RetainerPage3, InventoryType.RetainerPage4, InventoryType.RetainerPage5, InventoryType.RetainerPage6, InventoryType.RetainerPage7];
     public AtkUnitBase* Window => gui.GetAddonByName<AtkUnitBase>("RetainerSellList");
     public bool IsBusy => new[] { "ContextMenu", "InventoryContext", "SelectYesno", "InputNumeric", "RetainerSell", "SelectString" }
         .Any(name => { var addon = gui.GetAddonByName<AtkUnitBase>(name); return addon != null && addon->IsVisible && !(name == "ContextMenu" && (nint)addon == ownedMenu); });
@@ -37,7 +35,7 @@ internal sealed unsafe class GamePort(IGameGui gui, IPlayerState player, IDataMa
     }
 
     private static bool Valid(InventoryContainer* container) => container != null && container->IsLoaded && container->Items != null && container->Size > 0 && container->Size <= 200;
-    private static InventoryType[] Bags(Destination target) => target == Destination.Player ? PlayerBags : RetainerBags;
+    private static InventoryType[] Bags(Destination target) => target == Destination.Player ? InventoryScopes.PlayerBags : InventoryScopes.RetainerBags;
 
     public bool HasSpace(Destination target)
     {
@@ -63,7 +61,10 @@ internal sealed unsafe class GamePort(IGameGui gui, IPlayerState player, IDataMa
         var manager = InventoryManager.Instance();
         if (manager == null) return -1;
         long count = 0;
-        foreach (var bag in Bags(target).Append(target == Destination.Player ? InventoryType.Crystals : InventoryType.RetainerCrystals))
+        // The normal menu may return equipment to the Armoury Chest according to game settings.
+        // Count both possible destinations, including when a full chest falls back to player bags.
+        var destinations = target == Destination.Player ? InventoryScopes.PlayerItems : InventoryScopes.RetainerBags;
+        foreach (var bag in destinations.Append(target == Destination.Player ? InventoryType.Crystals : InventoryType.RetainerCrystals))
         {
             var container = manager->GetInventoryContainer(bag);
             if (!Valid(container)) return -1;

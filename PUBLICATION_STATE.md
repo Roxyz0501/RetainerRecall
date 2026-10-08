@@ -1,5 +1,16 @@
 # Publication state
 
+## 2026-10-08 version 0.2.0.1 preparation
+
+- Delay range lowered to 0.1–30 seconds for listing and recall; acknowledgement and UI transition waits retained.
+- Player-side listing scans bags and all 11 supported armoury equipment compartments, and can start from either. Equipped items and soul crystals remain excluded.
+- Shortcut target observation moved from ContextMenu PostSetup to after the original OpenForItemSlot function, following the referenced AutoRetainer entry route; native localized-menu selection remains guarded.
+- Recall acknowledgement now includes armoury contents; start failures and stop/completion reasons are printed to chat. The reported full-armoury stop is not reproduced or conclusively diagnosed; resolution is unverified.
+- Release target: https://github.com/Roxyz0501/RetainerRecall/releases/tag/v0.2.0.1
+- ZIP target: https://github.com/Roxyz0501/RetainerRecall/releases/download/v0.2.0.1/RetainerRecall-0.2.0.1.zip
+- Clean Release build (zero warnings/errors), 90 managed checks and five isolated UI/command/persistence checks passed. Native in-game hook/armoury behavior remains unverified.
+- Classification, author, optional dependencies, original icon and third-party notices retained. Publication pending.
+
 ## 2026-10-08 version 0.2.0.0 publication
 
 - Display name: Retainer Listing Helper; primary command `/retainerlisting`, legacy `/retainerrecall` retained.

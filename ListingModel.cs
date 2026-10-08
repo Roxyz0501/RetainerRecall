@@ -93,7 +93,7 @@ public sealed class ListingRun(IListingPort port)
         if (before == null || port.Interference) { Stop("販売リストを開き、他の操作を終了してください"); return; }
         if (savedPrice is <= 0 or > 999999999 || stackLimit is < 1 or > 9999) { Stop("価格または数量の設定が不正です"); return; }
         item = itemId; retainer = fromRetainer; price = savedPrice; limit = stackLimit;
-        delay = double.IsFinite(seconds) ? Math.Clamp(seconds, 0.5, 30) : 1.5;
+        delay = double.IsFinite(seconds) ? Math.Clamp(seconds, 0.1, 30) : 1.5;
         Completed = 0; State = Stage.Delay; next = now + delay;
         Status = $"連続出品: 単価{price:N0}ギル / 上限{limit}個";
     }

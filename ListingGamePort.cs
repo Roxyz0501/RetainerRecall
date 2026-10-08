@@ -14,13 +14,11 @@ internal sealed unsafe class ListingGamePort(IGameGui gui, IPlayerState player, 
     public uint OwnerAddonId;
     private nint ownerAddress;
     private nint menuAddress;
-    private static readonly InventoryType[] PlayerBags = [InventoryType.Inventory1, InventoryType.Inventory2, InventoryType.Inventory3, InventoryType.Inventory4];
-    private static readonly InventoryType[] RetainerBags = [InventoryType.RetainerPage1, InventoryType.RetainerPage2, InventoryType.RetainerPage3, InventoryType.RetainerPage4, InventoryType.RetainerPage5, InventoryType.RetainerPage6, InventoryType.RetainerPage7];
     public bool Interference => new[] { "SelectYesno", "InputNumeric", "SelectString", "ItemSearchResult", "ItemHistory" }.Any(Visible)
         || FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance()->WindowInactive;
     public bool Visible(string name) { var addon = gui.GetAddonByName<AtkUnitBase>(name); return addon != null && addon->IsVisible; }
     private static bool Loaded(InventoryContainer* bag) => bag != null && bag->IsLoaded && bag->Items != null && bag->Size is > 0 and <= 200;
-    public static bool AllowedInventory(InventoryType inventory) => PlayerBags.Contains(inventory) || RetainerBags.Contains(inventory);
+    public static bool AllowedInventory(InventoryType inventory) => InventoryScopes.PlayerItems.Contains(inventory) || InventoryScopes.RetainerBags.Contains(inventory);
 
     public ListingFrame? Read()
     {
@@ -40,7 +38,7 @@ internal sealed unsafe class ListingGamePort(IGameGui gui, IPlayerState player, 
             offers.Add(new(i, value->ItemId, (byte)value->Flags, value->Quantity, checked((long)manager->GetRetainerMarketPrice((short)i))));
         }
         List<Stock> stocks = [];
-        foreach (var type in FromRetainer ? RetainerBags : PlayerBags)
+        foreach (var type in FromRetainer ? InventoryScopes.RetainerBags : InventoryScopes.PlayerItems)
         {
             var bag = manager->GetInventoryContainer(type);
             if (!Loaded(bag)) return null;
@@ -57,11 +55,11 @@ internal sealed unsafe class ListingGamePort(IGameGui gui, IPlayerState player, 
         return new(player.ContentId, retainers->LastSelectedRetainerId, (nint)window, stocks.ToArray(), offers.ToArray(), market->Size);
     }
 
-    public Stock? ContextSource()
+    public Stock? ContextSource(InventoryType inventory, int slot, uint ownerId)
     {
         var agent = AgentInventoryContext.Instance();
-        if (agent == null || !AllowedInventory(agent->TargetInventoryId)) return null;
-        FromRetainer = RetainerBags.Contains(agent->TargetInventoryId);
+        if (agent == null || !AllowedInventory(inventory) || agent->TargetInventoryId != inventory || agent->TargetInventorySlotId != slot || agent->OwnerAddonId != ownerId) return null;
+        FromRetainer = InventoryScopes.RetainerBags.Contains(agent->TargetInventoryId);
         var frame = Read();
         if (frame == null) return null;
         var source = frame.Stock.SingleOrDefault(x => x.Inventory == (int)agent->TargetInventoryId && x.Slot == agent->TargetInventorySlotId);

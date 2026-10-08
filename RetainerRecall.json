@@ -2,11 +2,11 @@
   "Author": "Roxyz0501",
   "Name": "Retainer Listing Helper",
   "InternalName": "RetainerRecall",
-  "AssemblyVersion": "0.2.0.0",
+  "AssemblyVersion": "0.2.0.1",
   "DalamudApiLevel": 15,
   "ApplicableVersion": "any",
   "Punchline": "保存単価での連続出品と、出品アイテムの一括回収を補助",
-  "Description": "右Alt＋右クリックで、ログイン中に記憶した最終出品単価を使って同種アイテムを連続出品。NQ/HQ共通の価格履歴、Marketbuddyの数量設定参照、操作キー・ディレイ設定に対応。販売リスト左下のプレイヤー・リテイナー向け一括回収も利用できます。設定: /retainerlisting。実機検証待ち。",
+  "Description": "右Alt＋右クリックで、ログイン中に記憶した最終出品単価を使って同種アイテムを連続出品。所持品・アーマリーチェストの検索、NQ/HQ共通の価格履歴、Marketbuddyの数量設定参照、操作キー・ディレイ設定に対応。販売リスト左下のプレイヤー・リテイナー向け一括回収も利用できます。設定: /retainerlisting。実機検証待ち。",
   "RepoUrl": "https://github.com/Roxyz0501/RetainerRecall",
   "IconUrl": "https://raw.githubusercontent.com/Roxyz0501/RetainerRecall/main/images/icon.png",
   "Tags": ["retainer", "inventory", "market", "リテイナー", "連続出品", "出品回収"]

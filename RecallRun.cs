@@ -36,7 +36,7 @@ public sealed class RecallRun(IRecallPort port)
         if (snapshot.Listings.Length == 0) { Stop("出品中のアイテムはありません"); return; }
         expected = snapshot;
         destination = target;
-        delay = double.IsFinite(seconds) ? Math.Clamp(seconds, 0.5, 30) : 1.5;
+        delay = double.IsFinite(seconds) ? Math.Clamp(seconds, 0.1, 30) : 1.5;
         pending = null;
         waitingMenu = false;
         Completed = 0;

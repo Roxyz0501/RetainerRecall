@@ -4,6 +4,7 @@ using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Keys;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+using Dalamud.Hooking;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.Game;
@@ -24,6 +25,8 @@ internal sealed unsafe class ListingService : IDisposable
     private readonly Configuration config;
     private readonly Func<bool> recallBusy;
     private readonly ListingGamePort port;
+    private delegate void OpenContextDelegate(AgentInventoryContext* agent, InventoryType inventory, int slot, int argument, uint owner);
+    private Hook<OpenContextDelegate>? contextHook;
     public readonly ListingRun Run;
     public readonly SessionPrices Prices = new();
     private Stock? requested;
@@ -35,13 +38,24 @@ internal sealed unsafe class ListingService : IDisposable
     public string QuantitySource { get; private set; } = "未取得";
     public bool Busy => Run.Running || requested != null;
 
-    public ListingService(IDalamudPluginInterface pi, IAddonLifecycle lifecycle, IKeyState keys, IPlayerState player, IClientState client, IGameGui gui, IChatGui chat, IPluginLog log, ICondition condition, IDataManager data, Configuration config, Func<bool> recallBusy)
+    public ListingService(IDalamudPluginInterface pi, IAddonLifecycle lifecycle, IKeyState keys, IPlayerState player, IClientState client, IGameGui gui, IChatGui chat, IPluginLog log, ICondition condition, IDataManager data, IGameInteropProvider interop, Configuration config, Func<bool> recallBusy)
     {
         this.pi = pi; this.lifecycle = lifecycle; this.keys = keys; this.player = player; this.client = client;
         this.gui = gui; this.chat = chat; this.log = log; this.config = config; this.recallBusy = recallBusy;
         port = new(gui, player, condition, data); Run = new(port);
         Prices.SetCharacter(player.IsLoaded ? player.ContentId : 0);
-        lifecycle.RegisterListener(AddonEvent.PostSetup, "ContextMenu", ContextOpened);
+        try
+        {
+            var address = (nint)AgentInventoryContext.MemberFunctionPointers.OpenForItemSlot;
+            if (address == 0) throw new InvalidOperationException("所持品メニューの関数を確認できません");
+            contextHook = interop.HookFromAddress<OpenContextDelegate>(address, ContextOpened);
+            contextHook.Enable();
+        }
+        catch (Exception e)
+        {
+            contextHook?.Dispose(); contextHook = null;
+            Error("連続出品ショートカットを初期化できません。ログを確認してください", e);
+        }
         lifecycle.RegisterListener(AddonEvent.PreReceiveEvent, "RetainerSell", BeforeSellEvent);
         lifecycle.RegisterListener(AddonEvent.PreFinalize, "RetainerSell", SaleClosing);
         lifecycle.RegisterListener(AddonEvent.PreFinalize, "RetainerSellList", ListClosed);
@@ -49,17 +63,25 @@ internal sealed unsafe class ListingService : IDisposable
     }
     private void Logout(int type, int code) { Stop("ログアウトしました"); Prices.Clear(); captures.Clear(); }
     private void ListClosed(AddonEvent type, AddonArgs args) { Stop("販売リストが閉じたため連続出品を停止しました"); captures.Clear(); }
-    private void ContextOpened(AddonEvent type, AddonArgs args)
+    private void ContextOpened(AgentInventoryContext* agent, InventoryType inventory, int slot, int argument, uint owner)
     {
+        // PostSetup runs inside this call, before the inventory target may be finalized.
+        // Observe input before the original call, then inspect its completed ordinary menu.
+        var trigger = false;
+        try { trigger = config.EnableListing && !Busy && !recallBusy() && ListingGamePort.AllowedInventory(inventory) && ModifierHeld(); }
+        catch (Exception e) { log.Warning(e, "Could not read listing shortcut"); }
+        contextHook!.Original(agent, inventory, slot, argument, owner);
+        if (!trigger) return;
         try
         {
-            if (!config.EnableListing || Busy || recallBusy() || !ModifierHeld()) return;
-            var source = port.ContextSource();
-            if (source == null) return;
+            if (!port.Visible("RetainerSellList")) return;
+            var source = port.ContextSource(inventory, slot, owner);
+            if (source == null) { Error("出品対象を確認できません。販売リストと所持品を開き、アーマリーチェストも一度開いてから再実行してください"); return; }
             Prices.SetCharacter(player.IsLoaded ? player.ContentId : 0);
             if (!Prices.TryGet(source.ItemId, out _)) { Error("このアイテムはログイン後の出品履歴がありません。先に通常の操作で価格を確定して出品してください"); return; }
             requested = source;
             requestedFrame = port.Read();
+            log.Information("Listing shortcut accepted for inventory {Inventory}, slot {Slot}", inventory, slot);
         }
         catch (Exception e) { Error("ショートカットの対象を確認できません", e); }
     }
@@ -177,7 +199,7 @@ internal sealed unsafe class ListingService : IDisposable
     public void Dispose()
     {
         Stop(); Prices.Clear(); captures.Clear();
-        lifecycle.UnregisterListener(AddonEvent.PostSetup, "ContextMenu", ContextOpened);
+        contextHook?.Dispose(); contextHook = null;
         lifecycle.UnregisterListener(AddonEvent.PreReceiveEvent, "RetainerSell", BeforeSellEvent);
         lifecycle.UnregisterListener(AddonEvent.PreFinalize, "RetainerSell", SaleClosing);
         lifecycle.UnregisterListener(AddonEvent.PreFinalize, "RetainerSellList", ListClosed);

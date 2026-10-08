@@ -11,7 +11,7 @@ p.CountValue = 3; r.Tick(2.2); Check(r.Completed == 1 && r.Running, "destination
 r.Tick(3.69); Check(p.Moves == 1, "delay starts after acknowledgement");
 r.Tick(3.71); r.Tick(3.95); Check(p.Moves == 2 && p.Last == FakePort.B, "next listing selected");
 p.S = p.S with { Listings = [] }; p.CountValue = 7; r.Tick(4); Check(!r.Running && r.Completed == 2, "all items complete");
-(p, r) = Create(); r.Start(Destination.Retainer, 0, 0); r.Tick(0.49); Check(p.Moves == 0, "minimum delay enforced"); r.Tick(0.5); r.Tick(0.8); Check(p.Target == Destination.Retainer, "retainer destination");
+(p, r) = Create(); r.Start(Destination.Retainer, 0, 0); r.Tick(0.09); Check(p.Opens == 0, "minimum delay enforced"); r.Tick(0.1); Check(p.Opens == 1 && p.Moves == 0, "recall supports 0.1 second delay with menu wait"); r.Tick(0.31); Check(p.Target == Destination.Retainer, "retainer destination");
 r.Tick(16); Check(!r.Running && p.Moves == 1, "timeout never retries");
 (p, r) = Create(); r.Start(Destination.Player, double.NaN, 0); r.Tick(1); Check(p.Moves == 0, "invalid delay sanitized"); r.Tick(1.5); r.Tick(1.8); Check(p.Moves == 1, "sanitized delay executes");
 (p, r) = Create(); p.Space = false; r.Start(Destination.Player, 1, 0); r.Tick(1); Check(!r.Running && p.Moves == 0, "full inventory stops");
