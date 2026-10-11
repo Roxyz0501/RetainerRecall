@@ -108,5 +108,9 @@
   "NoDestination": "Stopped: no empty destination slot, or inventory could not be read.",
   "DestinationUnreadable": "Could not read the destination inventory.",
   "RecallMenuProgress": "Opening retrieval menu ({0} complete)",
-  "UnexpectedError": "Unexpected error. Check the log for details."
+  "UnexpectedError": "Unexpected error. Check the log for details.",
+  "LanguageSettings": "Language settings",
+  "LanguageHelp": "The display language changes immediately and is retained after restart. Game-provided text such as item names is unchanged.",
+  "SupportHeading": "Support development",
+  "SupportRecipient": "Recipient: Roxyz0501"
 }

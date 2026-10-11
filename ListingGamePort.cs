@@ -114,7 +114,7 @@ internal sealed unsafe class ListingGamePort(IGameGui gui, IPlayerState player, 
         ValidateSource(source);
         var addon = gui.GetAddonByName<AddonRetainerSell>("RetainerSell");
         if (addon == null || !addon->IsReady || !addon->IsVisible) return null;
-        var agent = AgentRetainer.Instance();
+        var agent = RetainerAgentState.Instance();
         if (agent == null || (int)agent->SellItemInventoryType != source.Inventory || agent->SellItemInventorySlot != source.Slot || agent->RetainerSellAddonId != addon->Id || addon->Quantity == null || addon->AskingPrice == null || addon->Confirm == null) throw new LocalizedException(L.M("SaleDialogMismatch"));
         return new((nint)addon, addon->Quantity->Value, addon->AskingPrice->Value, addon->Quantity->Data.Max, addon->AskingPrice->Data.Max);
     }
@@ -133,7 +133,7 @@ internal sealed unsafe class ListingGamePort(IGameGui gui, IPlayerState player, 
         if (current == null || current.Address != dialog.Address || current.Price != price || current.Quantity != quantity) throw new LocalizedException(L.M("ConfirmMismatch"));
         var addon = (AddonRetainerSell*)current.Address;
         if (addon->Confirm->OwnerNode == null || !addon->Confirm->IsEnabled || addon->AtkValuesCount < 9 || addon->AtkValues[5].Int != price || addon->AtkValues[8].Int != quantity) throw new LocalizedException(L.M("ButtonValues"));
-        var agent = AgentRetainer.Instance();
+        var agent = RetainerAgentState.Instance();
         if (agent == null || agent->SellItemUnitPrice != price || agent->SellItemQuantity != quantity) throw new LocalizedException(L.M("AgentValues"));
         NativeButton.Click((AtkUnitBase*)addon, addon->Confirm);
     }

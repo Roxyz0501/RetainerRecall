@@ -108,5 +108,9 @@
   "NoDestination": "移動先に空き枠がないか、所持品を読み込めないため停止しました",
   "DestinationUnreadable": "移動先の所持品を読み込めません",
   "RecallMenuProgress": "取り下げメニューを操作中（{0}件完了）",
-  "UnexpectedError": "予期しないエラーです。詳細はログを確認してください"
+  "UnexpectedError": "予期しないエラーです。詳細はログを確認してください",
+  "LanguageSettings": "言語設定",
+  "LanguageHelp": "表示言語はすぐに反映され、次回起動後も維持されます。ゲーム由来のアイテム名などは変更されません。",
+  "SupportHeading": "開発を支援する",
+  "SupportRecipient": "支援先: Roxyz0501"
 }

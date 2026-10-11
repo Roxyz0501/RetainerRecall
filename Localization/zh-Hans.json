@@ -108,5 +108,9 @@
   "NoDestination": "目标没有空位或无法读取物品栏，已停止。",
   "DestinationUnreadable": "无法读取目标物品栏。",
   "RecallMenuProgress": "正在操作取回菜单（已完成{0}笔）",
-  "UnexpectedError": "发生意外错误。详情请查看日志。"
+  "UnexpectedError": "发生意外错误。详情请查看日志。",
+  "LanguageSettings": "语言设置",
+  "LanguageHelp": "显示语言立即生效，并在重启后保留。物品名称等游戏提供的文本不会改变。",
+  "SupportHeading": "支持开发",
+  "SupportRecipient": "支持对象：Roxyz0501"
 }

@@ -18,6 +18,9 @@ unsafe class Program
         using (var plugin = new Plugin(Stub<IDalamudPluginInterface>(), Stub<ICommandManager>(), Stub<IFramework>(), Stub<IAddonLifecycle>(), Stub<IGameGui>(), Stub<IPlayerState>(), Stub<IPluginLog>(), Stub<IKeyState>(), Stub<IClientState>(), Stub<IChatGui>(), Stub<ICondition>(), Stub<IDataManager>(), Stub<IGameInteropProvider>()))
         {
             io.Fonts.Build();
+            var common = typeof(Plugin).Assembly.GetType("Roxyz0501.Dalamud.CommonUi.StandardPluginTabs")!;
+            var languages = (IReadOnlyList<(string Code, string SelfName)>)common.GetProperty("Languages")!.GetValue(null)!;
+            Check(languages.Select(x => x.Code).SequenceEqual(L.Codes) && languages.Select(x => x.SelfName).SequenceEqual(L.Names), "canonical language order and self-names match stored codes");
             Check(Dummy.Fonts.Count == 4, "production font callback loaded all four CJK faces");
             var required = string.Concat(L.AllStrings) + "言語 / Language";
             foreach (var font in Dummy.Fonts)
@@ -35,6 +38,17 @@ unsafe class Program
             var setLanguage = typeof(Plugin).GetMethod("SetLanguage", BindingFlags.Instance | BindingFlags.NonPublic)!;
             void Frame() { ImGui.NewFrame(); draw.Invoke(plugin, null); ImGui.Render(); }
             void Click(float x, float y) { io.AddMousePosEvent(x, y); Frame(); io.AddMouseButtonEvent(0, true); Frame(); io.AddMouseButtonEvent(0, false); Frame(); Frame(); }
+            void Tab(int index)
+            {
+                var labels = new[] { "ListingTab", "RecallTab", "LanguageSettings", "SupportTab" };
+                float x = 68;
+                ImGui.NewFrame();
+                ImGui.PushFont(Dummy.Fonts[L.Code switch { "zh-Hant" => 1, "zh-Hans" => 2, "ko" => 3, _ => 0 }]);
+                for (int i = 0; i < index; i++) x += ImGui.CalcTextSize(L.T(labels[i])).X + ImGui.GetStyle().FramePadding.X * 2 + ImGui.GetStyle().ItemInnerSpacing.X;
+                ImGui.PopFont();
+                ImGui.EndFrame();
+                Click(x + 15, 100);
+            }
             Dummy.Commands["/retainerlisting"].Handler("/retainerlisting", "");
             foreach (var code in L.Codes)
             {
@@ -46,25 +60,31 @@ unsafe class Program
                 Renderer.Render(ImGui.GetDrawData(), textures, Path.Combine(output, code + "-listing.bmp"));
             }
             setLanguage.Invoke(plugin, ["en"]); Frame(); Frame();
-            // Coordinates are within the fixed default window at (60,60), after the language field.
+            // Coordinates use the default window at (60,60); language selection has its own tab.
             var enabled = Dummy.Config.EnableListing;
-            Click(79, 220);
+            Click(79, 166);
             Check(Dummy.Config.EnableListing != enabled, "checkbox remains usable after seven language switches");
-            Click(79, 220);
-            Click(400, 123);
+            Click(79, 166);
+            Tab(2);
+            Click(180, 136);
             Renderer.Render(ImGui.GetDrawData(), textures, Path.Combine(output, "language-menu.bmp"));
-            Click(120, 152);
+            Click(120, 165);
             Check(Dummy.Config.Language == "ja", "language dropdown changes and saves selection through mouse input");
+            var saves = Dummy.SaveCount;
+            for (int i = 0; i < 10; i++) Frame();
+            setLanguage.Invoke(plugin, ["ja"]);
+            Check(Dummy.SaveCount == saves, "rendering and reselecting current language do not write configuration");
+            Tab(1); Tab(3); Tab(2);
+            Check(Dummy.SaveCount == saves, "tab navigation performs zero configuration writes");
             Renderer.Render(ImGui.GetDrawData(), textures, Path.Combine(output, "en-interaction.bmp"));
             foreach (var code in new[] { "de", "fr", "ko", "zh-Hans", "zh-Hant", "ja", "en" })
             {
                 setLanguage.Invoke(plugin, [code]); Frame(); Frame();
-                // Select tabs using their measured labels in the default window.
-                var firstWidth = ImGui.CalcTextSize(L.T("ListingTab")).X + ImGui.GetStyle().FramePadding.X * 2;
-                Click(70 + firstWidth + 20, 162);
+                Tab(2);
+                Renderer.Render(ImGui.GetDrawData(), textures, Path.Combine(output, code + "-language.bmp"));
+                Tab(1);
                 Renderer.Render(ImGui.GetDrawData(), textures, Path.Combine(output, code + "-recall.bmp"));
-                var secondWidth = ImGui.CalcTextSize(L.T("RecallTab")).X + ImGui.GetStyle().FramePadding.X * 2;
-                Click(70 + firstWidth + secondWidth + 35, 162);
+                Tab(3);
                 Renderer.Render(ImGui.GetDrawData(), textures, Path.Combine(output, code + "-support.bmp"));
             }
             Dummy.Commands["/retainerrecall"].Handler("/retainerrecall", ""); Frame();
@@ -80,6 +100,7 @@ public unsafe class Dummy : DispatchProxy
 {
     public static Configuration Config = new() { Language = "en" };
     public static string Saved = "";
+    public static int SaveCount;
     public static Dictionary<string, CommandInfo> Commands = [];
     public static List<ImFontPtr> Fonts = [];
     public static List<GCHandle> Pins = [];
@@ -89,7 +110,7 @@ public unsafe class Dummy : DispatchProxy
         switch (method!.Name)
         {
             case "GetPluginConfig": return Config;
-            case "SavePluginConfig": Saved = Newtonsoft.Json.JsonConvert.SerializeObject(args![0]); return null;
+            case "SavePluginConfig": SaveCount++; Saved = Newtonsoft.Json.JsonConvert.SerializeObject(args![0]); return null;
             case "AddHandler": return Commands.TryAdd((string)args![0]!, (CommandInfo)args[1]!);
             case "RemoveHandler": return Commands.Remove((string)args![0]!);
             case "get_UiBuilder": case "get_FontAtlas": return DispatchProxy.Create(method.ReturnType, typeof(Dummy));

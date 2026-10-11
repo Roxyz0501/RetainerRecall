@@ -87,7 +87,7 @@ internal sealed unsafe class GamePort(IGameGui gui, IPlayerState player, IDataMa
     public void OpenRecallMenu(Listing listing)
     {
         Validate(listing);
-        var agent = AgentRetainer.Instance();
+        var agent = RetainerAgentState.Instance();
         if (agent == null || agent->SellListEntryCount is < 1 or > 20 || agent->RetainerSellListAddonId != Window->Id) throw new LocalizedException(L.M("SellListMismatch"));
         ownedRow = -1;
         for (var row = 0; row < agent->SellListEntryCount; row++)
@@ -106,7 +106,7 @@ internal sealed unsafe class GamePort(IGameGui gui, IPlayerState player, IDataMa
         Validate(listing);
         var menu = gui.GetAddonByName<AtkUnitBase>("ContextMenu");
         if (menu == null || !menu->IsVisible || !menu->IsReady) return false;
-        var agent = AgentRetainer.Instance();
+        var agent = RetainerAgentState.Instance();
         if ((nint)menu != ownedMenu || agent == null || agent->ContextMenuIndex != ownedRow || ownedRow < 0 || ownedRow >= agent->SellListEntryCount || agent->SellListEntries[ownedRow].InventorySlot != listing.Slot)
             throw new LocalizedException(L.M("RecallTargetChanged"));
         var context = AgentContext.Instance();

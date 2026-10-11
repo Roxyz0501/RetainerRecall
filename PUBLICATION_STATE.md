@@ -1,5 +1,13 @@
 # Publication state
 
+## 2026-10-11 version 1.0.0.0 preparation
+
+- Copies StandardPluginTabs.cs byte-for-byte from the canonical workspace template (SHA-256 9A3E69FB6C51605E978C70F5786AC72A9F0E6B85DEDB53D8B126B562CC386E7B). Independent LanguageSettings and Support tab IDs, colors, spacing, dimensions and click-only navigation retained.
+- Preserves saved languages/migration and all listing/recall settings. Unchanged draws/tab changes/reselection save zero times (UI test); no new DB/HTTP access or polling introduced.
+- Host SDK lacks AgentRetainer fields used in 0.3.0.0. RetainerAgentState adapts only read fields from official MIT source commit b1cae2ffcb795c6037f119f49efaeaa0e691175e, keeping Instance resolution, existing cross-checks and UI dispatch; mismatched host structure size fails closed. Four synthetic layout tests added. In-game acceptance remains unverified.
+- Release target: https://github.com/Roxyz0501/RetainerRecall/releases/tag/v1.0.0.0
+- ZIP target: https://github.com/Roxyz0501/RetainerRecall/releases/download/v1.0.0.0/RetainerRecall-1.0.0.0.zip
+
 ## 2026-10-08 version 0.3.0.0 published
 
 - User authorized publishing completed localization work. Scope is the reviewed seven-language implementation and tests; listing/recall dispatch is unchanged. No CSV/data-exchange exporter exists in this plugin.

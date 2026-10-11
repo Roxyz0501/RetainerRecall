@@ -120,7 +120,7 @@ internal sealed unsafe class ListingService : IDisposable
             if (addon == null || addon->Quantity == null || addon->AskingPrice == null) return;
             var before = port.Read();
             if (before == null || addon->Quantity->Value <= 0 || addon->AskingPrice->Value <= 0) return;
-            var agent = AgentRetainer.Instance();
+            var agent = RetainerAgentState.Instance();
             if (agent == null || agent->RetainerSellAddonId != addon->Id || agent->SellItemInventorySlot < 0) return;
             var manager = InventoryManager.Instance();
             var bag = manager == null ? null : manager->GetInventoryContainer(agent->SellItemInventoryType);

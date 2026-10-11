@@ -108,5 +108,9 @@
   "NoDestination": "目標沒有空位或無法讀取物品欄，已停止。",
   "DestinationUnreadable": "無法讀取目標物品欄。",
   "RecallMenuProgress": "正在操作取回選單（已完成{0}筆）",
-  "UnexpectedError": "發生非預期錯誤。詳情請查看記錄。"
+  "UnexpectedError": "發生非預期錯誤。詳情請查看記錄。",
+  "LanguageSettings": "語言設定",
+  "LanguageHelp": "顯示語言立即生效，並在重新啟動後保留。物品名稱等遊戲提供的文字不會改變。",
+  "SupportHeading": "支持開發",
+  "SupportRecipient": "支持對象：Roxyz0501"
 }

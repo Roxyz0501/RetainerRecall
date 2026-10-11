@@ -7,6 +7,7 @@ using Dalamud.Game.Command;
 using Dalamud.Game;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+using Roxyz0501.Dalamud.CommonUi;
 
 namespace RetainerRecall;
 
@@ -121,11 +122,6 @@ public sealed unsafe class Plugin : IDalamudPlugin
         ImGui.SetNextWindowSizeConstraints(new(420, 300), new(float.MaxValue, float.MaxValue));
         if (ImGui.Begin("Retainer Listing Helper", ref settings))
         {
-            var language = Array.IndexOf(L.Codes, L.Code);
-            ImGui.TextUnformatted("言語 / Language");
-            ImGui.SetNextItemWidth(-1);
-            if (ImGui.Combo("###Language", ref language, string.Join("\0", L.Names) + "\0")) SetLanguage(L.Codes[language]);
-            ImGui.Separator();
             if (ImGui.BeginTabBar("Tabs"))
             {
                 if (ImGui.BeginTabItem(L.Label("ListingTab")))
@@ -143,17 +139,18 @@ public sealed unsafe class Plugin : IDalamudPlugin
                     if (run.Running && ImGui.Button(L.Label("StopRecall"))) stopRequested = true;
                     ImGui.EndTabItem();
                 }
-                ImGui.PushStyleColor(ImGuiCol.Tab, new Vector4(0.38f, 0.21f, 0.035f, 1));
-                ImGui.PushStyleColor(ImGuiCol.TabHovered, new Vector4(0.55f, 0.32f, 0.06f, 1));
-                ImGui.PushStyleColor(ImGuiCol.TabActive, new Vector4(0.46f, 0.26f, 0.04f, 1));
-                ImGui.PushStyleColor(ImGuiCol.Text, Vector4.One);
-                var support = ImGui.BeginTabItem(L.Label("SupportTab"));
-                ImGui.PopStyleColor(4);
+                if (ImGui.BeginTabItem(L.T("LanguageSettings") + "###LanguageSettings"))
+                {
+                    if (StandardPluginTabs.DrawLanguageSelector("言語 / Language", L.T("LanguageHelp"), L.Code) is { } code)
+                        SetLanguage(code);
+                    ImGui.EndTabItem();
+                }
+                StandardPluginTabs.PushSupportTabStyle();
+                var support = ImGui.BeginTabItem(L.T("SupportTab") + "###Support");
+                StandardPluginTabs.PopSupportTabStyle();
                 if (support)
                 {
-                    ImGui.TextWrapped(L.T("Author"));
-                    ImGui.TextWrapped(L.T("SupportHelp"));
-                    if (ImGui.Button(L.Label("SupportLink"))) Dalamud.Utility.Util.OpenLink("https://ko-fi.com/roxyz0501");
+                    StandardPluginTabs.DrawSupportContent(L.T("SupportHeading"), L.T("SupportHelp"), L.T("SupportRecipient"), L.T("SupportLink"));
                     ImGui.EndTabItem();
                 }
                 ImGui.EndTabBar();
@@ -164,6 +161,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
 
     private void SetLanguage(string code)
     {
+        if (L.Normalize(code) == config.Language) return;
         L.Set(code); config.Language = L.Code;
         foreach (var info in commandInfos) info.HelpMessage = L.T("CommandHelp");
         pi.SavePluginConfig(config);

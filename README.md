@@ -1,6 +1,6 @@
 # Retainer Listing Helper
 
-Author: **Roxyz0501** · Dalamud API 15 · .NET 10 · Windows x64
+Author: **Roxyz0501** · Version 1.0.0.0 · Dalamud API 15 · .NET 10 · Windows x64
 
 リテイナーの連続出品と出品取り下げを補助します。旧名はRetainer Recallです。既存インストールの更新・設定を維持するため、InternalNameと専用リポジトリ名は`RetainerRecall`のままです。
 
@@ -8,9 +8,11 @@ Author: **Roxyz0501** · Dalamud API 15 · .NET 10 · Windows x64
 
 旧版の自動出品確定処理は、クリックイベントの入力データを省略しており、ゲーム内でアクセス違反を起こす不備がありました。0.2.0.2で初期化済みの入力データを渡すよう修正しました。ネイティブ呼び出し境界の回帰テスト12項目と、旧実装でテストが失敗することを確認済みです。修正後のゲーム内実動作は未確認です。
 
-## 表示言語（0.3.0.0）
+## 表示言語（1.0.0.0）
 
-設定上部の **言語 / Language** から日本語・English・Deutsch・Français・한국어・简体中文・繁體中文を選択できます。変更は即時反映・保存され、再起動やキャラクター変更でも維持します。操作中の状態文も次の描画から切り替わり、価格履歴は消えません。
+独立した **言語設定** タブの **言語 / Language** から日本語・English・Deutsch・Français・한국어・简体中文・繁體中文を選択できます。変更は即時反映・保存され、再起動やキャラクター変更でも維持します。操作中の状態文も次の描画から切り替わり、価格履歴は消えません。
+
+言語設定と支援は共通コード `StandardPluginTabs.cs` を使用しています。表示だけ、タブ移動、同じ言語の再選択では設定を書き込みません。新たなDBアクセス・HTTP取得・ポーリングはありません。支援リンクはボタンをクリックした場合だけ開きます。
 
 言語が未設定・不正なときだけ、ゲーム言語、DalamudのUI言語、Englishの順で初期値を決めて保存します。API 15の公開API `IClientState.ClientLanguage` と `IDalamudPluginInterface.UiLanguage` を使用しています。SDKに公開ランチャー言語APIがないため、その段階は省略しています。従来版は言語設定を持たないため、既存の操作キー・ボタン・ディレイ設定を維持して言語だけを追加します。Auto選択肢はありません。
 
@@ -80,6 +82,8 @@ Marketbuddy使用中は、連続出品の間だけ公開IPCで価格自動操作
 - [Dalamud](https://github.com/goatcorp/Dalamud): goatcorp and contributors、AGPL-3.0。ホストAPI、UI、ライフサイクルを使用。DLLは同梱しません。
 
 `dotnet build -c Release` / `dotnet run --project Tests -c Release` / `dotnet run --project Tests/Native -c Release` / `./package.ps1`
+
+1.0.0.0では、利用中のAPI 15 SDKに不足するAgentRetainerフィールドを、[公式定義の固定コミット](https://github.com/aers/FFXIVClientStructs/blob/b1cae2ffcb795c6037f119f49efaeaa0e691175e/FFXIVClientStructs/FFXIV/Client/UI/Agent/AgentRetainer.cs)から読み取り用構造体へ適応しています。独自の関数検索や直接書き込みは追加せず、ホストのInstance解決と既存の価格・数量・対象照合を維持しています。構造体サイズが異なる場合は使用しません。同じサイズでのゲーム内部変更を検出できる保証はなく、ゲーム内動作は未確認です。
 
 アイコンは本プロジェクト用のオリジナル生成画像です。第三者・ゲームのアートワークは使用していません。
 

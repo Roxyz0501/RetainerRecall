@@ -108,5 +108,9 @@
   "NoDestination": "Arrêt : aucun emplacement libre ou inventaire illisible.",
   "DestinationUnreadable": "Impossible de lire l’inventaire de destination.",
   "RecallMenuProgress": "Ouverture du menu de retrait ({0} terminés)",
-  "UnexpectedError": "Erreur inattendue. Consultez le journal pour les détails."
+  "UnexpectedError": "Erreur inattendue. Consultez le journal pour les détails.",
+  "LanguageSettings": "Paramètres de langue",
+  "LanguageHelp": "La langue d’affichage change immédiatement et reste enregistrée après le redémarrage. Les textes du jeu, comme les noms d’objets, restent inchangés.",
+  "SupportHeading": "Soutenir le développement",
+  "SupportRecipient": "Bénéficiaire : Roxyz0501"
 }

@@ -14,6 +14,8 @@ No other plugin or third-party runtime DLL is bundled or required. The plugin de
 
 ## FFXIVClientStructs MIT notice
 
+`RetainerAgentState.cs` adapts the field offsets and entry layout from `AgentRetainer.cs` at commit `b1cae2ffcb795c6037f119f49efaeaa0e691175e` for read-only use when these fields are absent from the host SDK. No upstream member-function signature or implementation is copied. Source: https://github.com/aers/FFXIVClientStructs/blob/b1cae2ffcb795c6037f119f49efaeaa0e691175e/FFXIVClientStructs/FFXIV/Client/UI/Agent/AgentRetainer.cs
+
 MIT License
 
 Copyright (c) 2021-2023 aers

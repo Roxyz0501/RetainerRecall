@@ -108,5 +108,9 @@
   "NoDestination": "Gestoppt: kein freier Zielplatz oder Inventar nicht lesbar.",
   "DestinationUnreadable": "Das Zielinventar konnte nicht gelesen werden.",
   "RecallMenuProgress": "Rücknahmemenü wird bedient ({0} fertig)",
-  "UnexpectedError": "Unerwarteter Fehler. Details stehen im Protokoll."
+  "UnexpectedError": "Unerwarteter Fehler. Details stehen im Protokoll.",
+  "LanguageSettings": "Spracheinstellungen",
+  "LanguageHelp": "Die Anzeigesprache wird sofort geändert und nach einem Neustart beibehalten. Spieltexte wie Gegenstandsnamen bleiben unverändert.",
+  "SupportHeading": "Entwicklung unterstützen",
+  "SupportRecipient": "Empfänger: Roxyz0501"
 }
