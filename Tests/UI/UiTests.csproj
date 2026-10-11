@@ -3,6 +3,8 @@
   <ItemGroup>
     <Reference Include="$(appdata)/XIVLauncher/addon/Hooks/dev/*.dll" Exclude="$(appdata)/XIVLauncher/addon/Hooks/dev/cimgui.dll;$(appdata)/XIVLauncher/addon/Hooks/dev/cimguizmo.dll;$(appdata)/XIVLauncher/addon/Hooks/dev/cimplot.dll;$(appdata)/XIVLauncher/addon/Hooks/dev/nethost.dll;$(appdata)/XIVLauncher/addon/Hooks/dev/Dalamud.Boot.dll" />
     <ProjectReference Include="../../RetainerRecall.csproj" />
+    <EmbeddedResource Include="../../Plugin.cs" LogicalName="Contract.Plugin.cs" />
+    <EmbeddedResource Include="../../StandardPluginTabs.cs" LogicalName="Contract.StandardPluginTabs.cs" />
     <None Include="$(appdata)/XIVLauncher/addon/Hooks/dev/cimgui.dll" Link="cimgui.dll" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

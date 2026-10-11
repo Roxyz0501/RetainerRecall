@@ -112,5 +112,6 @@
   "LanguageSettings": "语言设置",
   "LanguageHelp": "显示语言立即生效，并在重启后保留。物品名称等游戏提供的文本不会改变。",
   "SupportHeading": "支持开发",
-  "SupportRecipient": "支持对象：Roxyz0501"
+  "SupportRecipient": "支持对象：Roxyz0501",
+  "SettingsTab": "设置"
 }

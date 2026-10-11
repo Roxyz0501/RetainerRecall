@@ -1,5 +1,12 @@
 # Publication state
 
+## 2026-10-12 version 1.0.0.1 preparation
+
+- Updates the canonical StandardPluginTabs.cs exactly (SHA-256 062372ECBF0030427BCDFE471592C6691CE3A3D3F8835A7438EA95C7763B25E9). Calls DrawStandardTrailingTabs once after all plugin-specific tabs, producing Listing, Recall, Settings, Language settings, Support.
+- Moves editing controls into Settings; existing listing/recall tabs retain status and stop actions. Configuration data, native processing and language persistence are unchanged. No new network/database access; unchanged rendering/navigation writes remain zero.
+- New patch release; previously published 1.0.0.0 is not replaced. Release target: https://github.com/Roxyz0501/RetainerRecall/releases/tag/v1.0.0.1
+- ZIP target: https://github.com/Roxyz0501/RetainerRecall/releases/download/v1.0.0.1/RetainerRecall-1.0.0.1.zip
+
 ## 2026-10-11 version 1.0.0.0 published
 
 - Copies StandardPluginTabs.cs byte-for-byte from the canonical workspace template (SHA-256 9A3E69FB6C51605E978C70F5786AC72A9F0E6B85DEDB53D8B126B562CC386E7B). Independent LanguageSettings and Support tab IDs, colors, spacing, dimensions and click-only navigation retained.

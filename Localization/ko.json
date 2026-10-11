@@ -112,5 +112,6 @@
   "LanguageSettings": "언어 설정",
   "LanguageHelp": "표시 언어는 즉시 적용되며 재시작 후에도 유지됩니다. 아이템 이름 등 게임에서 제공하는 텍스트는 변경되지 않습니다.",
   "SupportHeading": "개발 후원",
-  "SupportRecipient": "후원 대상: Roxyz0501"
+  "SupportRecipient": "후원 대상: Roxyz0501",
+  "SettingsTab": "설정"
 }

@@ -112,5 +112,6 @@
   "LanguageSettings": "言語設定",
   "LanguageHelp": "表示言語はすぐに反映され、次回起動後も維持されます。ゲーム由来のアイテム名などは変更されません。",
   "SupportHeading": "開発を支援する",
-  "SupportRecipient": "支援先: Roxyz0501"
+  "SupportRecipient": "支援先: Roxyz0501",
+  "SettingsTab": "設定"
 }

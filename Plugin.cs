@@ -126,38 +126,46 @@ public sealed unsafe class Plugin : IDalamudPlugin
             {
                 if (ImGui.BeginTabItem(L.Label("ListingTab")))
                 {
-                    DrawListingSettings();
+                    DrawListingStatus();
                     ImGui.EndTabItem();
                 }
                 if (ImGui.BeginTabItem(L.Label("RecallTab")))
                 {
-                    ImGui.TextWrapped(L.T("PositionHelp"));
-                    EditButton(L.T("PlayerInventory"), config.Player);
-                    EditButton(L.T("RetainerInventory"), config.Retainer);
                     ImGui.TextWrapped(L.T("SpaceHelp"));
                     ImGui.TextWrapped(run.Status.ToString());
                     if (run.Running && ImGui.Button(L.Label("StopRecall"))) stopRequested = true;
                     ImGui.EndTabItem();
                 }
-                if (ImGui.BeginTabItem(L.T("LanguageSettings") + "###LanguageSettings"))
-                {
-                    if (StandardPluginTabs.DrawLanguageSelector("言語 / Language", L.T("LanguageHelp"), L.Code) is { } code)
-                        SetLanguage(code);
-                    ImGui.EndTabItem();
-                }
-                StandardPluginTabs.PushSupportTabStyle();
-                var support = ImGui.BeginTabItem(L.T("SupportTab") + "###Support");
-                StandardPluginTabs.PopSupportTabStyle();
-                if (support)
-                {
-                    StandardPluginTabs.DrawSupportContent(L.T("SupportHeading"), L.T("SupportHelp"), L.T("SupportRecipient"), L.T("SupportLink"));
-                    ImGui.EndTabItem();
-                }
+                StandardPluginTabs.DrawStandardTrailingTabs(
+                    L.T("SettingsTab"), "Settings", DrawSettings,
+                    L.T("LanguageSettings"), DrawLanguageSettings,
+                    L.T("SupportTab"), DrawSupport);
                 ImGui.EndTabBar();
             }
         }
         ImGui.End();
     }
+
+    private void DrawSettings()
+    {
+        if (ImGui.CollapsingHeader(L.Label("ListingTab"), ImGuiTreeNodeFlags.DefaultOpen))
+            DrawListingSettings();
+        if (ImGui.CollapsingHeader(L.Label("RecallTab"), ImGuiTreeNodeFlags.DefaultOpen))
+        {
+            ImGui.TextWrapped(L.T("PositionHelp"));
+            EditButton(L.T("PlayerInventory"), config.Player);
+            EditButton(L.T("RetainerInventory"), config.Retainer);
+        }
+    }
+
+    private void DrawLanguageSettings()
+    {
+        if (StandardPluginTabs.DrawLanguageSelector("言語 / Language", L.T("LanguageHelp"), L.Code) is { } code)
+            SetLanguage(code);
+    }
+
+    private static void DrawSupport() => StandardPluginTabs.DrawSupportContent(
+        L.T("SupportHeading"), L.T("SupportHelp"), L.T("SupportRecipient"), L.T("SupportLink"));
 
     private void SetLanguage(string code)
     {
@@ -210,7 +218,6 @@ public sealed unsafe class Plugin : IDalamudPlugin
 
     private void DrawListingSettings()
     {
-        ImGui.TextWrapped(L.T("ListingHelp"));
         ImGui.BeginDisabled(run.Running || listing.Busy);
         var changed = Check("EnableShortcut", ref config.EnableListing);
         var key = (int)config.ListingKey;
@@ -221,7 +228,11 @@ public sealed unsafe class Plugin : IDalamudPlugin
         ImGui.TextWrapped(L.T("QuantityHelp"));
         if (changed) pi.SavePluginConfig(config);
         ImGui.EndDisabled();
-        ImGui.Separator();
+    }
+
+    private void DrawListingStatus()
+    {
+        ImGui.TextWrapped(L.T("ListingHelp"));
         ImGui.TextWrapped(L.T("PriceCount", listing.Prices.Count));
         ImGui.TextWrapped(L.T("QuantitySource", listing.QuantitySource));
         ImGui.TextWrapped(listing.Run.Status.ToString());

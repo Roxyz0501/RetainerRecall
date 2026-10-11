@@ -112,5 +112,6 @@
   "LanguageSettings": "Paramètres de langue",
   "LanguageHelp": "La langue d’affichage change immédiatement et reste enregistrée après le redémarrage. Les textes du jeu, comme les noms d’objets, restent inchangés.",
   "SupportHeading": "Soutenir le développement",
-  "SupportRecipient": "Bénéficiaire : Roxyz0501"
+  "SupportRecipient": "Bénéficiaire : Roxyz0501",
+  "SettingsTab": "Paramètres"
 }

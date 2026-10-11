@@ -112,5 +112,6 @@
   "LanguageSettings": "語言設定",
   "LanguageHelp": "顯示語言立即生效，並在重新啟動後保留。物品名稱等遊戲提供的文字不會改變。",
   "SupportHeading": "支持開發",
-  "SupportRecipient": "支持對象：Roxyz0501"
+  "SupportRecipient": "支持對象：Roxyz0501",
+  "SettingsTab": "設定"
 }

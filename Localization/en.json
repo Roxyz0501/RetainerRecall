@@ -112,5 +112,6 @@
   "LanguageSettings": "Language settings",
   "LanguageHelp": "The display language changes immediately and is retained after restart. Game-provided text such as item names is unchanged.",
   "SupportHeading": "Support development",
-  "SupportRecipient": "Recipient: Roxyz0501"
+  "SupportRecipient": "Recipient: Roxyz0501",
+  "SettingsTab": "Settings"
 }

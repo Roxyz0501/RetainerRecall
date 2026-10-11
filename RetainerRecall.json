@@ -2,7 +2,7 @@
   "Author": "Roxyz0501",
   "Name": "Retainer Listing Helper",
   "InternalName": "RetainerRecall",
-  "AssemblyVersion": "1.0.0.0",
+  "AssemblyVersion": "1.0.0.1",
   "DalamudApiLevel": 15,
   "ApplicableVersion": "any",
   "Punchline": "保存単価での連続出品と、出品アイテムの一括回収を補助",

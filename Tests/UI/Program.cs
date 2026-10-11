@@ -13,6 +13,15 @@ unsafe class Program
     static void Check(bool value, string label) { if (!value) throw new Exception(label); Console.WriteLine("PASS " + label); }
     static void Main(string[] args)
     {
+        string Source(string name) { using var r = new StreamReader(typeof(Program).Assembly.GetManifestResourceStream("Contract." + name)!); return r.ReadToEnd(); }
+        var pluginSource = Source("Plugin.cs");
+        var helperSource = Source("StandardPluginTabs.cs");
+        var trailingCall = pluginSource.IndexOf("StandardPluginTabs.DrawStandardTrailingTabs(", StringComparison.Ordinal);
+        Check(trailingCall > pluginSource.LastIndexOf("ImGui.BeginTabItem(", StringComparison.Ordinal) && trailingCall == pluginSource.LastIndexOf("StandardPluginTabs.DrawStandardTrailingTabs(", StringComparison.Ordinal), "one trailing helper follows every plugin-specific tab");
+        var settingsAt = helperSource.IndexOf("{settingsLabel}###{settingsStableId}", StringComparison.Ordinal);
+        var languageAt = helperSource.IndexOf("{languageSettingsLabel}###LanguageSettings", StringComparison.Ordinal);
+        var supportAt = helperSource.IndexOf("{supportLabel}###Support", StringComparison.Ordinal);
+        Check(settingsAt >= 0 && settingsAt < languageAt && languageAt < supportAt, "shared tabs are ordered Settings, Language settings, Support");
         var output = Path.GetFullPath(args.Length > 0 ? args[0] : "artifacts"); Directory.CreateDirectory(output);
         ImGui.CreateContext(); var io = ImGui.GetIO(); io.DisplaySize = new(1440, 900); io.DeltaTime = 1f / 60; io.ConfigInputTrickleEventQueue = false;
         using (var plugin = new Plugin(Stub<IDalamudPluginInterface>(), Stub<ICommandManager>(), Stub<IFramework>(), Stub<IAddonLifecycle>(), Stub<IGameGui>(), Stub<IPlayerState>(), Stub<IPluginLog>(), Stub<IKeyState>(), Stub<IClientState>(), Stub<IChatGui>(), Stub<ICondition>(), Stub<IDataManager>(), Stub<IGameInteropProvider>()))
@@ -40,7 +49,7 @@ unsafe class Program
             void Click(float x, float y) { io.AddMousePosEvent(x, y); Frame(); io.AddMouseButtonEvent(0, true); Frame(); io.AddMouseButtonEvent(0, false); Frame(); Frame(); }
             void Tab(int index)
             {
-                var labels = new[] { "ListingTab", "RecallTab", "LanguageSettings", "SupportTab" };
+                var labels = new[] { "ListingTab", "RecallTab", "SettingsTab", "LanguageSettings", "SupportTab" };
                 float x = 68;
                 ImGui.NewFrame();
                 ImGui.PushFont(Dummy.Fonts[L.Code switch { "zh-Hant" => 1, "zh-Hans" => 2, "ko" => 3, _ => 0 }]);
@@ -61,11 +70,13 @@ unsafe class Program
             }
             setLanguage.Invoke(plugin, ["en"]); Frame(); Frame();
             // Coordinates use the default window at (60,60); language selection has its own tab.
-            var enabled = Dummy.Config.EnableListing;
-            Click(79, 166);
-            Check(Dummy.Config.EnableListing != enabled, "checkbox remains usable after seven language switches");
-            Click(79, 166);
             Tab(2);
+            Renderer.Render(ImGui.GetDrawData(), textures, Path.Combine(output, "en-settings.bmp"));
+            var enabled = Dummy.Config.EnableListing;
+            Click(79, 148);
+            Check(Dummy.Config.EnableListing != enabled, "checkbox remains usable after seven language switches");
+            Click(79, 148);
+            Tab(3);
             Click(180, 136);
             Renderer.Render(ImGui.GetDrawData(), textures, Path.Combine(output, "language-menu.bmp"));
             Click(120, 165);
@@ -74,17 +85,19 @@ unsafe class Program
             for (int i = 0; i < 10; i++) Frame();
             setLanguage.Invoke(plugin, ["ja"]);
             Check(Dummy.SaveCount == saves, "rendering and reselecting current language do not write configuration");
-            Tab(1); Tab(3); Tab(2);
+            Tab(1); Tab(2); Tab(4); Tab(3);
             Check(Dummy.SaveCount == saves, "tab navigation performs zero configuration writes");
             Renderer.Render(ImGui.GetDrawData(), textures, Path.Combine(output, "en-interaction.bmp"));
             foreach (var code in new[] { "de", "fr", "ko", "zh-Hans", "zh-Hant", "ja", "en" })
             {
                 setLanguage.Invoke(plugin, [code]); Frame(); Frame();
                 Tab(2);
+                Renderer.Render(ImGui.GetDrawData(), textures, Path.Combine(output, code + "-settings.bmp"));
+                Tab(3);
                 Renderer.Render(ImGui.GetDrawData(), textures, Path.Combine(output, code + "-language.bmp"));
                 Tab(1);
                 Renderer.Render(ImGui.GetDrawData(), textures, Path.Combine(output, code + "-recall.bmp"));
-                Tab(3);
+                Tab(4);
                 Renderer.Render(ImGui.GetDrawData(), textures, Path.Combine(output, code + "-support.bmp"));
             }
             Dummy.Commands["/retainerrecall"].Handler("/retainerrecall", ""); Frame();

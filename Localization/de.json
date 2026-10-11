@@ -112,5 +112,6 @@
   "LanguageSettings": "Spracheinstellungen",
   "LanguageHelp": "Die Anzeigesprache wird sofort geändert und nach einem Neustart beibehalten. Spieltexte wie Gegenstandsnamen bleiben unverändert.",
   "SupportHeading": "Entwicklung unterstützen",
-  "SupportRecipient": "Empfänger: Roxyz0501"
+  "SupportRecipient": "Empfänger: Roxyz0501",
+  "SettingsTab": "Einstellungen"
 }
