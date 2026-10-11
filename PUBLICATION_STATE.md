@@ -1,12 +1,16 @@
 # Publication state
 
-## 2026-10-11 version 1.0.0.0 preparation
+## 2026-10-11 version 1.0.0.0 published
 
 - Copies StandardPluginTabs.cs byte-for-byte from the canonical workspace template (SHA-256 9A3E69FB6C51605E978C70F5786AC72A9F0E6B85DEDB53D8B126B562CC386E7B). Independent LanguageSettings and Support tab IDs, colors, spacing, dimensions and click-only navigation retained.
 - Preserves saved languages/migration and all listing/recall settings. Unchanged draws/tab changes/reselection save zero times (UI test); no new DB/HTTP access or polling introduced.
 - Host SDK lacks AgentRetainer fields used in 0.3.0.0. RetainerAgentState adapts only read fields from official MIT source commit b1cae2ffcb795c6037f119f49efaeaa0e691175e, keeping Instance resolution, existing cross-checks and UI dispatch; mismatched host structure size fails closed. Four synthetic layout tests added. In-game acceptance remains unverified.
 - Release target: https://github.com/Roxyz0501/RetainerRecall/releases/tag/v1.0.0.0
 - ZIP target: https://github.com/Roxyz0501/RetainerRecall/releases/download/v1.0.0.0/RetainerRecall-1.0.0.0.zip
+- Published source commit: `179a70665fb70ef5bb71aa030f054defe511ac4e`; public ZIP SHA-256: `50F9BB88BC196E102E9B6523161881026C14FCB21CC1196A623E92C5CB29F0D2`. Non-draft GitHub Release and source push completed.
+- Clean Release rebuild has zero warnings/errors; 149 managed, 16 native and 23 font/UI checks passed. Anonymous repository/icon HTTP 200, image/png, downloaded public ZIP hash/manifest and seven embedded language resources verified. Secrets/local paths/generated artifacts/dependencies/notices checked; no host DLLs or fonts bundled.
+- Shared index commit `639e23aaf76dd068e8a73084daafd505e83eedf1` updates only RetainerRecall, retaining six other entries from latest main. Commit-pinned public index is verified (HTTP 200, seven entries); ordinary main initially returned cached 0.3.0.0.
+- After CDN refresh, the ordinary main URL also returned HTTP 200, seven entries and RetainerRecall 1.0.0.0 with the correct public ZIP URL. Registration verification complete.
 
 ## 2026-10-08 version 0.3.0.0 published
 
