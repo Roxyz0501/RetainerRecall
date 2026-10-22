@@ -1,12 +1,15 @@
 # Publication state
 
-## 2026-10-23 version 1.0.0.2 publication preparation
+## 2026-10-23 version 1.0.0.2 published
 
 - User explicitly authorized implementation and publication. Configuration-only persistence changes; no game operation or installed DLL replacement.
 - Changed-only 60-second saves, logout/unload/Dispose flush, atomic validated replacement, three valid previous generations, corruption recovery and bounded retries. Session prices and transaction handling remain memory-only; no empty HistoryFiles tab. Shared templates/specifications unchanged.
 - Synthetic validation results and limitations: PERSISTENCE_VALIDATION.md. Release target: https://github.com/Roxyz0501/RetainerRecall/releases/tag/v1.0.0.2
 - ZIP target: https://github.com/Roxyz0501/RetainerRecall/releases/download/v1.0.0.2/RetainerRecall-1.0.0.2.zip
-- Source/release/index verification pending; this entry does not claim publication success.
+- Published source commit: `021fe1bd4f75b9ae9c61c47a458c78ca7fcee7cf`. Non-draft, non-prerelease Release contains the 550,308-byte ZIP. Anonymous public download matches SHA-256 `363775253699692D2366B79B43885D4EC252FFA257BDCC8881DF75C8A0F2DF2D`; repository and icon return HTTP 200 (image/png).
+- Clean Release build: zero warnings/errors. 25 persistence, 149 managed, 16 native boundary and 29 UI/lifecycle checks passed. 600 synthetic changes: one 434-byte commit; unchanged ten cycles: zero writes; three injected pre-commit failures: zero commits, 1,296 logical temporary bytes. No residual callbacks or background writer after Dispose.
+- Shared index connector commit: `a555f2c40e89883b0ee80ae0eeb6f16cd24b3e4c`. Only RetainerRecall changed; twelve other entries preserved. Both anonymous commit-pinned and ordinary main URLs returned HTTP 200, thirteen entries, version 1.0.0.2 and the correct public ZIP URL.
+- Actual game lifecycle timing, listing/retrieval, other-plugin interaction and the full-armoury issue remain unverified. No production settings or installed DLL were modified.
 
 ## 2026-10-12 version 1.0.0.1 published
 
