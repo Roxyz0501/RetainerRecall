@@ -113,5 +113,7 @@
   "LanguageHelp": "The display language changes immediately and is retained after restart. Game-provided text such as item names is unchanged.",
   "SupportHeading": "Support development",
   "SupportRecipient": "Recipient: Roxyz0501",
-  "SettingsTab": "Settings"
+  "SettingsTab": "Settings",
+  "ConfigSaveFailed": "Could not save settings. Retries run every 60 seconds, up to 3 consecutive failures. After stopping, check permissions and free space, then reload the plugin. Unsaved settings may be lost.",
+  "ConfigRecovered": "Settings recovered from a valid backup. The damaged settings will be preserved separately on the next save."
 }

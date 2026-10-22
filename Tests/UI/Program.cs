@@ -23,9 +23,15 @@ unsafe class Program
         var supportAt = helperSource.IndexOf("{supportLabel}###Support", StringComparison.Ordinal);
         Check(settingsAt >= 0 && settingsAt < languageAt && languageAt < supportAt, "shared tabs are ordered Settings, Language settings, Support");
         var output = Path.GetFullPath(args.Length > 0 ? args[0] : "artifacts"); Directory.CreateDirectory(output);
+        Dummy.ConfigPath = Path.Combine(Path.GetTempPath(), "RetainerRecall-ui-" + Guid.NewGuid().ToString("N"), "config.json");
+        Directory.CreateDirectory(Path.GetDirectoryName(Dummy.ConfigPath)!);
+        File.WriteAllText(Dummy.ConfigPath, ConfigurationFile.Encode(Dummy.Config));
         ImGui.CreateContext(); var io = ImGui.GetIO(); io.DisplaySize = new(1440, 900); io.DeltaTime = 1f / 60; io.ConfigInputTrickleEventQueue = false;
         using (var plugin = new Plugin(Stub<IDalamudPluginInterface>(), Stub<ICommandManager>(), Stub<IFramework>(), Stub<IAddonLifecycle>(), Stub<IGameGui>(), Stub<IPlayerState>(), Stub<IPluginLog>(), Stub<IKeyState>(), Stub<IClientState>(), Stub<IChatGui>(), Stub<ICondition>(), Stub<IDataManager>(), Stub<IGameInteropProvider>()))
         {
+            var persistence = (ConfigurationPersistence)typeof(Plugin).GetField("persistence", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(plugin)!;
+            Dummy.Config = persistence.Config;
+            var storage = (ConfigurationFile)typeof(ConfigurationPersistence).GetField("file", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(persistence)!;
             io.Fonts.Build();
             var common = typeof(Plugin).Assembly.GetType("Roxyz0501.Dalamud.CommonUi.StandardPluginTabs")!;
             var languages = (IReadOnlyList<(string Code, string SelfName)>)common.GetProperty("Languages")!.GetValue(null)!;
@@ -64,7 +70,8 @@ unsafe class Program
                 setLanguage.Invoke(plugin, [code]);
                 for (var i = 0; i < 3; i++) Frame();
                 Check(Dummy.Config.Language == code && Dummy.Commands["/retainerlisting"].HelpMessage == L.T("CommandHelp"), code + " switches settings and command help immediately");
-                var persisted = Newtonsoft.Json.JsonConvert.DeserializeObject<Configuration>(Dummy.Saved)!;
+                persistence.Flush();
+                var persisted = ConfigurationFile.Decode(File.ReadAllText(Dummy.ConfigPath));
                 Check(persisted.Language == code && !persisted.InitializeLanguage(() => "ja", () => "en"), code + " saved choice survives restart");
                 Renderer.Render(ImGui.GetDrawData(), textures, Path.Combine(output, code + "-listing.bmp"));
             }
@@ -80,13 +87,13 @@ unsafe class Program
             Click(180, 136);
             Renderer.Render(ImGui.GetDrawData(), textures, Path.Combine(output, "language-menu.bmp"));
             Click(120, 165);
-            Check(Dummy.Config.Language == "ja", "language dropdown changes and saves selection through mouse input");
-            var saves = Dummy.SaveCount;
+            Check(Dummy.Config.Language == "ja", "language dropdown applies selection immediately through mouse input");
+            var saves = storage.Saves;
             for (int i = 0; i < 10; i++) Frame();
             setLanguage.Invoke(plugin, ["ja"]);
-            Check(Dummy.SaveCount == saves, "rendering and reselecting current language do not write configuration");
+            Check(storage.Saves == saves, "rendering and reselecting current language do not write configuration");
             Tab(1); Tab(2); Tab(4); Tab(3);
-            Check(Dummy.SaveCount == saves, "tab navigation performs zero configuration writes");
+            Check(storage.Saves == saves, "tab navigation performs zero configuration writes");
             Renderer.Render(ImGui.GetDrawData(), textures, Path.Combine(output, "en-interaction.bmp"));
             foreach (var code in new[] { "de", "fr", "ko", "zh-Hans", "zh-Hant", "ja", "en" })
             {
@@ -102,8 +109,16 @@ unsafe class Program
             }
             Dummy.Commands["/retainerrecall"].Handler("/retainerrecall", ""); Frame();
             Check(ImGui.GetDrawData().TotalVtxCount > 0, "legacy command opens settings");
+            setLanguage.Invoke(plugin, ["de"]);
+            Dummy.Events["Logout"]!.DynamicInvoke(0, 0);
+            Check(storage.Load().Config.Language == "de", "real logout event flushes pending UI configuration");
+            setLanguage.Invoke(plugin, ["fr"]);
         }
         Check(Dummy.Commands.Count == 0, "command handlers disposed");
+        Check(Dummy.Events.Values.All(x => x == null), "framework, UI and logout callbacks detached");
+        Check(ConfigurationFile.Decode(File.ReadAllText(Dummy.ConfigPath)).Language == "fr", "plugin Dispose flushes pending configuration");
+        Check(Dummy.SaveCount == 0, "no legacy per-event SavePluginConfig writes");
+        Directory.Delete(Path.GetDirectoryName(Dummy.ConfigPath)!, true);
         ImGui.DestroyContext();
         foreach (var pin in Dummy.Pins) pin.Free();
     }
@@ -112,6 +127,8 @@ unsafe class Program
 public unsafe class Dummy : DispatchProxy
 {
     public static Configuration Config = new() { Language = "en" };
+    public static string ConfigPath = "";
+    public static Dictionary<string, Delegate?> Events = [];
     public static string Saved = "";
     public static int SaveCount;
     public static Dictionary<string, CommandInfo> Commands = [];
@@ -120,8 +137,11 @@ public unsafe class Dummy : DispatchProxy
     public ImFontPtr Font;
     protected override object? Invoke(MethodInfo? method, object?[]? args)
     {
+        if (method!.Name.StartsWith("add_")) { var key = method.Name[4..]; Events.TryGetValue(key, out var old); Events[key] = Delegate.Combine(old, (Delegate)args![0]!); return null; }
+        if (method.Name.StartsWith("remove_")) { var key = method.Name[7..]; Events.TryGetValue(key, out var old); Events[key] = Delegate.Remove(old, (Delegate)args![0]!); return null; }
         switch (method!.Name)
         {
+            case "get_ConfigFile": return new FileInfo(ConfigPath);
             case "GetPluginConfig": return Config;
             case "SavePluginConfig": SaveCount++; Saved = Newtonsoft.Json.JsonConvert.SerializeObject(args![0]); return null;
             case "AddHandler": return Commands.TryAdd((string)args![0]!, (CommandInfo)args[1]!);

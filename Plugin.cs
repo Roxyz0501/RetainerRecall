@@ -20,6 +20,9 @@ public sealed unsafe class Plugin : IDalamudPlugin
     private readonly IPluginLog log;
     private readonly IChatGui chat;
     private readonly Configuration config;
+    private readonly ConfigurationPersistence persistence;
+    private readonly IClientState client;
+    private bool disposed;
     private readonly GamePort port;
     private readonly RecallRun run;
     private readonly ListingService listing;
@@ -33,16 +36,21 @@ public sealed unsafe class Plugin : IDalamudPlugin
     public Plugin(IDalamudPluginInterface pi, ICommandManager commands, IFramework framework, IAddonLifecycle lifecycle, IGameGui gui, IPlayerState player, IPluginLog log, IKeyState keys, IClientState client, IChatGui chat, ICondition condition, IDataManager data, IGameInteropProvider interop)
     {
         this.pi = pi; this.commands = commands; this.framework = framework; this.lifecycle = lifecycle; this.log = log; this.chat = chat;
-        config = pi.GetPluginConfig() as Configuration ?? new();
+        this.client = client;
+        persistence = new(new ConfigurationFile(pi.ConfigFile.FullName), () => Now,
+            e => { log.Error(e, "Configuration save failed"); chat.PrintError(L.T("ConfigSaveFailed")); });
+        config = persistence.Config;
         if (config.InitializeLanguage(() => client.ClientLanguage switch
             { ClientLanguage.Japanese => "ja", ClientLanguage.English => "en", ClientLanguage.German => "de", ClientLanguage.French => "fr", _ => null }, () => pi.UiLanguage))
-            pi.SavePluginConfig(config);
+            persistence.Changed();
+        if (persistence.Recovered) chat.Print(L.T("ConfigRecovered"));
         fonts = new(pi.UiBuilder.FontAtlas);
         config.Player ??= new(); config.Retainer ??= new() { Offset = new(8, 42) };
         Normalize(config.Player); Normalize(config.Retainer);
         config.ListingDelaySeconds = float.IsFinite(config.ListingDelaySeconds) ? Math.Clamp(config.ListingDelaySeconds, 0.1f, 30) : 1.5f;
         config.ListingStackLimit = Math.Clamp(config.ListingStackLimit, 1, 9999);
         if (!Enum.IsDefined(config.ListingKey)) config.ListingKey = ListingKey.RightAlt;
+        persistence.Changed(); // Normalization is compared to the loaded snapshot at the boundary.
         port = new(gui, player, data);
         run = new(port);
         listing = new(pi, lifecycle, keys, player, client, gui, chat, log, condition, data, interop, config, () => run.Running || requested != null);
@@ -52,6 +60,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
             commandInfos.Add(info); commands.AddHandler(command, info);
         }
         framework.Update += Update;
+        client.Logout += Logout;
         pi.UiBuilder.Draw += Draw;
         pi.UiBuilder.OpenConfigUi += Open;
         pi.UiBuilder.OpenMainUi += Open;
@@ -64,9 +73,13 @@ public sealed unsafe class Plugin : IDalamudPlugin
         if (!float.IsFinite(button.Offset.X) || !float.IsFinite(button.Offset.Y)) button.Offset = new(8, 8);
     }
     private void Open() => settings = true;
+    private void Logout(int type, int code) => persistence.Flush();
     private void Closed(AddonEvent type, AddonArgs args) { requested = null; run.Stop(L.M("RecallClosed")); }
     private void Update(IFramework _)
     {
+        if (disposed) return;
+        if (framework.IsFrameworkUnloading) { persistence.Flush(); return; }
+        persistence.Tick();
         try
         {
             if (stopRequested) { run.Stop(); listing.Stop(); requested = null; stopRequested = false; }
@@ -109,6 +122,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
 
     private void Draw()
     {
+        if (disposed) return;
         using var font = fonts.Push();
         var window = port.Window;
         if (window != null && window->IsVisible)
@@ -172,7 +186,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
         if (L.Normalize(code) == config.Language) return;
         L.Set(code); config.Language = L.Code;
         foreach (var info in commandInfos) info.HelpMessage = L.T("CommandHelp");
-        pi.SavePluginConfig(config);
+        persistence.Changed();
     }
 
     private static string Field(string key)
@@ -198,22 +212,26 @@ public sealed unsafe class Plugin : IDalamudPlugin
         changed |= ImGui.SliderFloat(Field("RecallDelay"), ref button.DelaySeconds, 0.1f, 30, L.T("SecondsFormat"));
         changed |= ImGui.DragFloat2(Field("Position"), ref button.Offset, 1, -3000, 3000, "%.0f");
         if (ImGui.Button(L.Label("Reset"))) { button.Visible = true; button.DelaySeconds = 1.5f; button.Offset = new(8, button == config.Player ? 8 : 42); changed = true; }
-        if (changed) { Normalize(button); pi.SavePluginConfig(config); }
+        if (changed) { Normalize(button); persistence.Changed(); }
         ImGui.EndDisabled(); ImGui.PopID();
     }
 
     public void Dispose()
     {
-        run.Stop();
-        listing.Dispose();
-        fonts.Dispose();
+        if (disposed) return;
+        disposed = true;
+        requested = null;
+        stopRequested = false;
         lifecycle.UnregisterListener(AddonEvent.PreFinalize, "RetainerSellList", Closed);
         framework.Update -= Update;
+        client.Logout -= Logout;
         pi.UiBuilder.Draw -= Draw;
         pi.UiBuilder.OpenConfigUi -= Open;
         pi.UiBuilder.OpenMainUi -= Open;
         commands.RemoveHandler("/retainerrecall");
         commands.RemoveHandler("/retainerlisting");
+        try { run.Stop(); listing.Dispose(); }
+        finally { try { persistence.Dispose(); } finally { fonts.Dispose(); } }
     }
 
     private void DrawListingSettings()
@@ -226,7 +244,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
         changed |= Check("UseMarketbuddy", ref config.UseMarketbuddyLimit);
         if (ImGui.InputInt(Field("QuantityLimit"), ref config.ListingStackLimit)) { config.ListingStackLimit = Math.Clamp(config.ListingStackLimit, 1, 9999); changed = true; }
         ImGui.TextWrapped(L.T("QuantityHelp"));
-        if (changed) pi.SavePluginConfig(config);
+        if (changed) persistence.Changed();
         ImGui.EndDisabled();
     }
 

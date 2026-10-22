@@ -113,5 +113,7 @@
   "LanguageHelp": "Die Anzeigesprache wird sofort geändert und nach einem Neustart beibehalten. Spieltexte wie Gegenstandsnamen bleiben unverändert.",
   "SupportHeading": "Entwicklung unterstützen",
   "SupportRecipient": "Empfänger: Roxyz0501",
-  "SettingsTab": "Einstellungen"
+  "SettingsTab": "Einstellungen",
+  "ConfigSaveFailed": "Einstellungen konnten nicht gespeichert werden. Wiederholung alle 60 Sekunden, bis zu 3 Fehler in Folge. Danach Berechtigungen und Speicherplatz prüfen und das Plugin neu laden. Ungespeicherte Einstellungen können verloren gehen.",
+  "ConfigRecovered": "Einstellungen aus gültiger Sicherung wiederhergestellt. Beschädigte Einstellungen bleiben beim nächsten Speichern separat erhalten."
 }

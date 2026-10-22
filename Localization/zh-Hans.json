@@ -113,5 +113,7 @@
   "LanguageHelp": "显示语言立即生效，并在重启后保留。物品名称等游戏提供的文本不会改变。",
   "SupportHeading": "支持开发",
   "SupportRecipient": "支持对象：Roxyz0501",
-  "SettingsTab": "设置"
+  "SettingsTab": "设置",
+  "ConfigSaveFailed": "无法保存设置。每60秒重试，连续失败3次后停止。请检查权限及可用空间，然后重新加载插件。未保存的设置可能丢失。",
+  "ConfigRecovered": "已从有效备份恢复设置。下次保存时将单独保留损坏的设置。"
 }

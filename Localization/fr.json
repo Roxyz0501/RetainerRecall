@@ -113,5 +113,7 @@
   "LanguageHelp": "La langue d’affichage change immédiatement et reste enregistrée après le redémarrage. Les textes du jeu, comme les noms d’objets, restent inchangés.",
   "SupportHeading": "Soutenir le développement",
   "SupportRecipient": "Bénéficiaire : Roxyz0501",
-  "SettingsTab": "Paramètres"
+  "SettingsTab": "Paramètres",
+  "ConfigSaveFailed": "Échec de sauvegarde. Nouvelle tentative toutes les 60 secondes, arrêt après 3 échecs consécutifs. Vérifiez les droits et l’espace libre, puis rechargez le plugin. Les réglages non sauvegardés peuvent être perdus.",
+  "ConfigRecovered": "Réglages restaurés depuis une sauvegarde valide. Le fichier endommagé sera conservé séparément à la prochaine sauvegarde."
 }

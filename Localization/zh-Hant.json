@@ -113,5 +113,7 @@
   "LanguageHelp": "顯示語言立即生效，並在重新啟動後保留。物品名稱等遊戲提供的文字不會改變。",
   "SupportHeading": "支持開發",
   "SupportRecipient": "支持對象：Roxyz0501",
-  "SettingsTab": "設定"
+  "SettingsTab": "設定",
+  "ConfigSaveFailed": "無法儲存設定。每60秒重試，連續失敗3次後停止。請檢查權限及可用空間，然後重新載入外掛程式。未儲存的設定可能遺失。",
+  "ConfigRecovered": "已從有效備份還原設定。下次儲存時將另行保留損壞的設定。"
 }

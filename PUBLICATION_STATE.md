@@ -1,5 +1,13 @@
 # Publication state
 
+## 2026-10-23 version 1.0.0.2 publication preparation
+
+- User explicitly authorized implementation and publication. Configuration-only persistence changes; no game operation or installed DLL replacement.
+- Changed-only 60-second saves, logout/unload/Dispose flush, atomic validated replacement, three valid previous generations, corruption recovery and bounded retries. Session prices and transaction handling remain memory-only; no empty HistoryFiles tab. Shared templates/specifications unchanged.
+- Synthetic validation results and limitations: PERSISTENCE_VALIDATION.md. Release target: https://github.com/Roxyz0501/RetainerRecall/releases/tag/v1.0.0.2
+- ZIP target: https://github.com/Roxyz0501/RetainerRecall/releases/download/v1.0.0.2/RetainerRecall-1.0.0.2.zip
+- Source/release/index verification pending; this entry does not claim publication success.
+
 ## 2026-10-12 version 1.0.0.1 published
 
 - Updates the canonical StandardPluginTabs.cs exactly (SHA-256 062372ECBF0030427BCDFE471592C6691CE3A3D3F8835A7438EA95C7763B25E9). Calls DrawStandardTrailingTabs once after all plugin-specific tabs, producing Listing, Recall, Settings, Language settings, Support.

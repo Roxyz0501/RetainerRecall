@@ -18,6 +18,7 @@ try {
         'LICENSE' = 'LICENSE'
         'THIRD-PARTY-NOTICES.md' = 'THIRD-PARTY-NOTICES.md'
         'README.md' = 'README.md'
+        'PERSISTENCE_VALIDATION.md' = 'PERSISTENCE_VALIDATION.md'
     }
     foreach ($name in ($files.Keys | Sort-Object)) {
         [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, (Join-Path $projectRoot $files[$name]), $name) | Out-Null
