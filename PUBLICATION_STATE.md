@@ -1,10 +1,13 @@
 # Publication state
 
-## 2026-10-25 version 1.0.0.3 preparation
+## 2026-10-25 version 1.0.0.3 published
 
 - Full source review and regression fixes documented in REVIEW_2026-10-25.md. Parent AGENTS.md grants continuing update/publication authorization.
 - Price learning now validates the exact source decrement and one new offer; manual capture uses its actual inventory scope. Restores v0.1 recall-only configuration compatibility. Native boundary guards and observation-error cleanup hardened.
-- Release/asset/index publication and verification pending. Target: https://github.com/Roxyz0501/RetainerRecall/releases/tag/v1.0.0.3
+- Published source commit: `83123ffd90e41e51c501187ef5ec5e5e1f522051`. Non-draft, non-prerelease Release: https://github.com/Roxyz0501/RetainerRecall/releases/tag/v1.0.0.3
+- ZIP: https://github.com/Roxyz0501/RetainerRecall/releases/download/v1.0.0.3/RetainerRecall-1.0.0.3.zip ; 553,111 bytes; SHA-256 `B6E88F19273A07F80B23DE99833EDCE3212B55B71F88F35D34CD3956A4AE2399`. Anonymous public download hash matches; repository/icon HTTP 200, image/png.
+- Shared index connector commit `a7843bf2bf3fe040eb871ebab9fc4a4fca858a66` changes only RetainerRecall; thirteen other entries retained. Both anonymous pinned and main URLs returned HTTP 200, fourteen entries and version 1.0.0.3 with the correct ZIP link.
+- Release rebuild: zero warnings/errors. 155 managed, 19 native boundary, 26 persistence and 29 UI/lifecycle checks pass (229 total). Full-armoury retrieval stop and actual in-game native behavior remain unverified.
 
 ## 2026-10-23 version 1.0.0.2 published
 
