@@ -1,5 +1,11 @@
 # Publication state
 
+## 2026-10-25 version 1.0.0.3 preparation
+
+- Full source review and regression fixes documented in REVIEW_2026-10-25.md. Parent AGENTS.md grants continuing update/publication authorization.
+- Price learning now validates the exact source decrement and one new offer; manual capture uses its actual inventory scope. Restores v0.1 recall-only configuration compatibility. Native boundary guards and observation-error cleanup hardened.
+- Release/asset/index publication and verification pending. Target: https://github.com/Roxyz0501/RetainerRecall/releases/tag/v1.0.0.3
+
 ## 2026-10-23 version 1.0.0.2 published
 
 - User explicitly authorized implementation and publication. Configuration-only persistence changes; no game operation or installed DLL replacement.

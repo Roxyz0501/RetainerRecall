@@ -34,6 +34,16 @@ unsafe class Program
 
     static void Main()
     {
+        bool invalidMenu = false;
+        try { NativeMenu.Select(null, "test"); } catch (LocalizedException) { invalidMenu = true; }
+        Check(invalidMenu, "absent context menu rejects without dereferencing native memory");
+        bool invalidCallback = false;
+        try { NativeMenu.Callback(null, 0); } catch (LocalizedException) { invalidCallback = true; }
+        Check(invalidCallback, "absent addon callback rejects without native dispatch");
+        AtkUnitBase unready = default;
+        invalidCallback = false;
+        try { NativeMenu.Callback(&unready, 0); } catch (LocalizedException) { invalidCallback = true; }
+        Check(invalidCallback, "unready addon callback rejects without native dispatch");
         RetainerAgentState state = default;
         var bytes = (byte*)&state;
         *(int*)(bytes + 0x58) = 10000; *(int*)(bytes + 0x5C) = 17;

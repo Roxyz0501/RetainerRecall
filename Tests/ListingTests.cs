@@ -56,6 +56,16 @@ static class ListingTests
         check(ListingRules.ConfirmedPriceItem(baseline, p.Frame, 99, 275) == 100, "successful confirmation learns base item ID");
         check(ListingRules.ConfirmedPriceItem(baseline, baseline, 99, 275) == null, "cancelled or unchanged listing does not learn price");
         check(ListingRules.ConfirmedPriceItem(baseline, p.Frame with { Character = 2 }, 99, 275) == null, "cannot learn another character price");
+        check(ListingRules.ConfirmedPriceItem(baseline, baseline with { Offers = p.Frame.Offers }, 99, 275) == null, "price learning waits for source decrement");
+        var repriced = baseline with { Offers = [new(0, 100, 0, 99, 1)] };
+        check(ListingRules.ConfirmedPriceItem(repriced, repriced with { Offers = [new(0, 100, 0, 99, 275)] }, 99, 275) == null, "repricing an existing offer cannot confirm a new listing");
+        check(ListingRules.ConfirmedPriceItem(baseline, p.Frame with { Stock = [] }, 99, 275) == null, "unexpected source decrement cannot teach a price");
+        var retainerSource = PostingPort.Item with { Inventory = 10000 };
+        var retainerBefore = baseline with { Stock = [retainerSource] };
+        var retainerAfter = p.Frame with { Stock = [retainerSource with { Quantity = 21 }] };
+        check(ListingRules.ConfirmedPriceItem(retainerBefore, retainerAfter, 99, 275, retainerSource) == 100, "manual retainer listing learns from its exact source slot");
+        check(ListingRules.ConfirmedPriceItem(baseline, p.Frame, 99, 275, retainerSource) == null, "another inventory scope cannot confirm captured source");
+        check(ListingRules.ConfirmedPriceItem(baseline, p.Frame, 99, 275, PostingPort.Item with { Slot = 1 }) == null, "same item at another slot cannot confirm captured source");
         r.Tick(4.19); check(p.Opens == 1, "listing delay starts after acknowledgement");
         r.Tick(4.21); r.Tick(4.5); r.Tick(4.8); r.Tick(5.2);
         check(p.Confirms == 2 && p.Quantity == 21, "automatically lists remaining partial stack");

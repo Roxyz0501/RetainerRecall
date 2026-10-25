@@ -14,13 +14,21 @@ internal sealed unsafe class ListingGamePort(IGameGui gui, IPlayerState player, 
     public uint OwnerAddonId;
     private nint ownerAddress;
     private nint menuAddress;
-    public bool Interference => new[] { "SelectYesno", "InputNumeric", "SelectString", "ItemSearchResult", "ItemHistory" }.Any(Visible)
-        || FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance()->WindowInactive;
+    public bool Interference
+    {
+        get
+        {
+            var framework = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance();
+            return framework == null || framework->WindowInactive ||
+                new[] { "SelectYesno", "InputNumeric", "SelectString", "ItemSearchResult", "ItemHistory" }.Any(Visible);
+        }
+    }
     public bool Visible(string name) { var addon = gui.GetAddonByName<AtkUnitBase>(name); return addon != null && addon->IsVisible; }
     private static bool Loaded(InventoryContainer* bag) => bag != null && bag->IsLoaded && bag->Items != null && bag->Size is > 0 and <= 200;
     public static bool AllowedInventory(InventoryType inventory) => InventoryScopes.PlayerItems.Contains(inventory) || InventoryScopes.RetainerBags.Contains(inventory);
 
-    public ListingFrame? Read()
+    public ListingFrame? Read() => Read(FromRetainer);
+    public ListingFrame? Read(bool fromRetainer)
     {
         var window = gui.GetAddonByName<AtkUnitBase>("RetainerSellList");
         if (!player.IsLoaded || player.ContentId == 0 || !condition[ConditionFlag.OccupiedSummoningBell] || window == null || !window->IsVisible || !window->IsReady) return null;
@@ -38,7 +46,7 @@ internal sealed unsafe class ListingGamePort(IGameGui gui, IPlayerState player, 
             offers.Add(new(i, value->ItemId, (byte)value->Flags, value->Quantity, checked((long)manager->GetRetainerMarketPrice((short)i))));
         }
         List<Stock> stocks = [];
-        foreach (var type in FromRetainer ? InventoryScopes.RetainerBags : InventoryScopes.PlayerItems)
+        foreach (var type in fromRetainer ? InventoryScopes.RetainerBags : InventoryScopes.PlayerItems)
         {
             var bag = manager->GetInventoryContainer(type);
             if (!Loaded(bag)) return null;
@@ -96,7 +104,9 @@ internal sealed unsafe class ListingGamePort(IGameGui gui, IPlayerState player, 
     {
         ValidateSource(source);
         if (Visible("ContextMenu") || Visible("RetainerSell")) throw new LocalizedException(L.M("OtherMenu"));
-        AgentInventoryContext.Instance()->OpenForItemSlot((InventoryType)source.Inventory, source.Slot, 0, OwnerAddonId);
+        var agent = AgentInventoryContext.Instance();
+        if (agent == null) throw new LocalizedException(L.M("ContextUnavailable"));
+        agent->OpenForItemSlot((InventoryType)source.Inventory, source.Slot, 0, OwnerAddonId);
         menuAddress = (nint)gui.GetAddonByName<AtkUnitBase>("ContextMenu");
     }
     public bool SelectSale(Stock source)
@@ -132,7 +142,7 @@ internal sealed unsafe class ListingGamePort(IGameGui gui, IPlayerState player, 
         var current = Dialog(source);
         if (current == null || current.Address != dialog.Address || current.Price != price || current.Quantity != quantity) throw new LocalizedException(L.M("ConfirmMismatch"));
         var addon = (AddonRetainerSell*)current.Address;
-        if (addon->Confirm->OwnerNode == null || !addon->Confirm->IsEnabled || addon->AtkValuesCount < 9 || addon->AtkValues[5].Int != price || addon->AtkValues[8].Int != quantity) throw new LocalizedException(L.M("ButtonValues"));
+        if (addon->Confirm->OwnerNode == null || !addon->Confirm->IsEnabled || addon->AtkValues == null || addon->AtkValuesCount < 9 || addon->AtkValues[5].Int != price || addon->AtkValues[8].Int != quantity) throw new LocalizedException(L.M("ButtonValues"));
         var agent = RetainerAgentState.Instance();
         if (agent == null || agent->SellItemUnitPrice != price || agent->SellItemQuantity != quantity) throw new LocalizedException(L.M("AgentValues"));
         NativeButton.Click((AtkUnitBase*)addon, addon->Confirm);

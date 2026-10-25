@@ -33,7 +33,7 @@ internal sealed unsafe class ListingService : IDisposable
     private ListingFrame? requestedFrame;
     private bool locked;
     private readonly List<PriceCapture> captures = [];
-    private sealed record PriceCapture(ListingFrame Before, uint ItemId, int Quantity, int Price, double ConfirmedAt, double Deadline);
+    private sealed record PriceCapture(ListingFrame Before, Stock Source, int Quantity, int Price, double ConfirmedAt, double Deadline);
     private static double Now => (double)Stopwatch.GetTimestamp() / Stopwatch.Frequency;
     public Text QuantitySource { get; private set; } = L.M("UnknownQuantity");
     public bool Busy => Run.Running || requested != null;
@@ -118,18 +118,16 @@ internal sealed unsafe class ListingService : IDisposable
     private void CaptureSale(AddonRetainerSell* addon)
     {
             if (addon == null || addon->Quantity == null || addon->AskingPrice == null) return;
-            var before = port.Read();
-            if (before == null || addon->Quantity->Value <= 0 || addon->AskingPrice->Value <= 0) return;
             var agent = RetainerAgentState.Instance();
-            if (agent == null || agent->RetainerSellAddonId != addon->Id || agent->SellItemInventorySlot < 0) return;
-            var manager = InventoryManager.Instance();
-            var bag = manager == null ? null : manager->GetInventoryContainer(agent->SellItemInventoryType);
-            if (bag == null || !bag->IsLoaded || agent->SellItemInventorySlot >= bag->Size) return;
-            var item = bag->GetInventorySlot(agent->SellItemInventorySlot);
-            if (item == null || item->IsSymbolic || item->ItemId == 0) return;
+            if (agent == null || agent->RetainerSellAddonId != addon->Id || agent->SellItemInventorySlot < 0 || !ListingGamePort.AllowedInventory(agent->SellItemInventoryType)) return;
+            // Manual listings need their actual source scope, independent of the last shortcut.
+            var before = port.Read(InventoryScopes.RetainerBags.Contains(agent->SellItemInventoryType));
+            if (before == null || addon->Quantity->Value <= 0 || addon->AskingPrice->Value <= 0) return;
+            var source = before.Stock.SingleOrDefault(x => x.Inventory == (int)agent->SellItemInventoryType && x.Slot == agent->SellItemInventorySlot);
+            if (source == null || source.Quantity < addon->Quantity->Value) return;
             Prices.SetCharacter(before.Character);
             var now = Now;
-            captures.Add(new(before, item->ItemId, addon->Quantity->Value, addon->AskingPrice->Value, now, now + 15));
+            captures.Add(new(before, source, addon->Quantity->Value, addon->AskingPrice->Value, now, now + 15));
             if (captures.Count > 20) captures.RemoveAt(0);
     }
 
@@ -164,12 +162,18 @@ internal sealed unsafe class ListingService : IDisposable
             var character = player.IsLoaded ? player.ContentId : 0;
             Prices.SetCharacter(character);
             if (character == 0) { Stop(L.M("LoggedOut")); captures.Clear(); return; }
-            var frame = captures.Count != 0 || requested != null ? port.Read() : null;
+            var frame = requested != null ? port.Read() : null;
+            ListingFrame? playerFrame = null, retainerFrame = null;
+            bool playerRead = false, retainerRead = false;
             foreach (var capture in captures.ToArray())
             {
-                if (Now >= capture.Deadline || frame == null || !ListingRules.SameSession(capture.Before, frame)) { captures.Remove(capture); continue; }
-                var item = ListingRules.ConfirmedPriceItem(capture.Before, frame, capture.Quantity, capture.Price);
-                if (item == capture.ItemId) { Prices.Remember(item.Value, capture.Price, capture.ConfirmedAt); captures.Remove(capture); }
+                var fromRetainer = capture.Source.Inventory >= 10000;
+                if (fromRetainer && !retainerRead) { retainerFrame = port.Read(true); retainerRead = true; }
+                if (!fromRetainer && !playerRead) { playerFrame = port.Read(false); playerRead = true; }
+                var observed = fromRetainer ? retainerFrame : playerFrame;
+                if (Now >= capture.Deadline || observed == null || !ListingRules.SameSession(capture.Before, observed)) { captures.Remove(capture); continue; }
+                var item = ListingRules.ConfirmedPriceItem(capture.Before, observed, capture.Quantity, capture.Price, capture.Source);
+                if (item != null) { Prices.Remember(item.Value, capture.Price, capture.ConfirmedAt); captures.Remove(capture); }
             }
             if (requested is { } source)
             {
@@ -191,6 +195,7 @@ internal sealed unsafe class ListingService : IDisposable
     }
     private void Error(Text message, Exception? error = null)
     {
+        captures.Clear(); // Do not retry the same failed observation every frame.
         Stop(message);
         chat.PrintError($"[Retainer Listing Helper] {message}");
         if (error != null) log.Warning(error, "Listing automation stopped");

@@ -76,6 +76,14 @@ try
     var legacy = Newtonsoft.Json.Linq.JObject.Parse(ConfigurationFile.Encode(new()));
     legacy.Remove("Language"); legacy["$type"] = "RetainerRecall.Configuration, RetainerRecall";
     Check(ConfigurationFile.Decode(legacy.ToString()).ListingStackLimit == 99, "legacy type metadata and missing language remain compatible");
+    var recallOnly = Newtonsoft.Json.Linq.JObject.Parse(ConfigurationFile.Encode(new()));
+    foreach (var key in new[] { "Language", "EnableListing", "ListingKey", "ListingDelaySeconds", "UseMarketbuddyLimit", "ListingStackLimit" }) recallOnly.Remove(key);
+    recallOnly["Player"]!["DelaySeconds"] = 2.5;
+    recallOnly["Retainer"]!["Visible"] = false;
+    Configuration? upgraded = null;
+    try { upgraded = ConfigurationFile.Decode(recallOnly.ToString()); } catch (InvalidDataException) { }
+    Check(upgraded is { ListingStackLimit: 99 } && upgraded.Player.DelaySeconds == 2.5f && !upgraded.Retainer.Visible,
+        "v0.1 recall-only configuration upgrades without losing button settings");
     var truncated = NewFile("truncated");
     truncated.Save(ConfigurationFile.Encode(new()));
     var original = File.ReadAllText(Path.Combine(root, "truncated.json"));

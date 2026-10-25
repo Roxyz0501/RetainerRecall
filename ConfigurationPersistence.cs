@@ -90,9 +90,13 @@ public sealed class ConfigurationFile(string path)
     public static Configuration Decode(string json)
     {
         var root = JObject.Parse(json);
+        // v0.1 used the same Version=1 but only had Player/Retainer settings.
+        // Accept that exact older feature set; a partially missing modern schema is still invalid.
+        var recallOnly = root["Language"] == null &&
+            new[] { "EnableListing", "ListingStackLimit", "ListingKey", "ListingDelaySeconds", "UseMarketbuddyLimit" }.All(key => root[key] == null);
         if (root["Version"]?.Type != JTokenType.Integer || !ButtonShape(root["Player"]) || !ButtonShape(root["Retainer"]) ||
-            root["EnableListing"]?.Type != JTokenType.Boolean || root["ListingStackLimit"]?.Type != JTokenType.Integer ||
-            root["ListingKey"] == null || root["ListingDelaySeconds"] == null || root["UseMarketbuddyLimit"]?.Type != JTokenType.Boolean)
+            (!recallOnly && (root["EnableListing"]?.Type != JTokenType.Boolean || root["ListingStackLimit"]?.Type != JTokenType.Integer ||
+            root["ListingKey"] == null || root["ListingDelaySeconds"] == null || root["UseMarketbuddyLimit"]?.Type != JTokenType.Boolean)))
             throw new InvalidDataException("Invalid configuration structure.");
         // Never instantiate types supplied by JSON, including legacy Dalamud $type metadata.
         var c = root.ToObject<Configuration>(JsonSerializer.Create(new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.None }))!;

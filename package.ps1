@@ -19,6 +19,7 @@ try {
         'THIRD-PARTY-NOTICES.md' = 'THIRD-PARTY-NOTICES.md'
         'README.md' = 'README.md'
         'PERSISTENCE_VALIDATION.md' = 'PERSISTENCE_VALIDATION.md'
+        'REVIEW_2026-10-25.md' = 'REVIEW_2026-10-25.md'
     }
     foreach ($name in ($files.Keys | Sort-Object)) {
         [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, (Join-Path $projectRoot $files[$name]), $name) | Out-Null

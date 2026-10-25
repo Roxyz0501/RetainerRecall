@@ -52,11 +52,18 @@ public static class ListingRules
         var expected = before.Stock.Select(x => x == source ? x with { Quantity = x.Quantity - quantity } : x).Where(x => x.Quantity > 0);
         return expected.SequenceEqual(after.Stock);
     }
-    public static uint? ConfirmedPriceItem(ListingFrame before, ListingFrame after, int quantity, int price)
+    public static uint? ConfirmedPriceItem(ListingFrame before, ListingFrame after, int quantity, int price, Stock? source = null)
     {
-        if (!SameSession(before, after)) return null;
-        var changed = after.Offers.Except(before.Offers).Where(x => x.Quantity == quantity && x.Price == price).ToArray();
-        return changed.Length == 1 ? changed[0].ItemId : null;
+        if (!SameSession(before, after) || quantity <= 0 || price <= 0) return null;
+        // An offer update alone can be a price edit or an unrelated server update.
+        // Require one new offer and the exact source-slot decrement, just as automation does.
+        foreach (var candidate in source == null ? before.Stock : new[] { source })
+        {
+            if (candidate.Quantity < quantity || !before.Stock.Contains(candidate)) continue;
+            if (HasExpectedAddition(before, after, candidate, quantity, price) &&
+                HasExpectedStockChange(before, after, candidate, quantity)) return candidate.ItemId;
+        }
+        return null;
     }
 }
 
