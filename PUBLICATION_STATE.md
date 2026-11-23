@@ -1,11 +1,13 @@
 # Publication state
 
-## 2026-11-23 version 1.0.0.4 preparation
+## 2026-11-23 version 1.0.0.4 published
 
 - Adopted canonical StandardPluginInfo.cs/StandardPluginTabs.cs and specification unchanged. One optional dependency: Marketbuddy (quantity configuration and pricing lock IPC); no required dependency, no AutoRetainer/runtime library misclassification.
 - Settings → Information → Language settings → Support; zero definitions pass a null callback. Cached local status reads and click-only installer/official guide actions. Existing operations and persistence unchanged.
 - Release target: https://github.com/Roxyz0501/RetainerRecall/releases/tag/v1.0.0.4
-- Publication verification pending. Validation: VALIDATION_INFO.md.
+- Published source commit `1776bf7bd9b3e3caff52322caa536921f78e8404`; non-draft/non-prerelease Release and 562,949-byte ZIP. Anonymous download SHA-256 `03E481D78700159862DAFAE2B5E26079BCD0C18E31C082337C5DF0D2E49C6BDA` matches the tested package. Repository/icon HTTP 200, image/png.
+- Shared index commit `e2c913a60e8416f816d69d796eeffde9d18418b2`; conflicts were handled by fresh reads, retaining seventeen other entries. Pinned URL and ordinary main URL (after cache revalidation) returned HTTP 200, version 1.0.0.4 and the correct ZIP.
+- Canonical source hashes match; Release rebuild warning/error counts zero. 155 managed, 19 native, 26 persistence, 38 UI checks pass (238 total). Validation: VALIDATION_INFO.md. Actual game/installer integration remains unverified; no production settings or installed DLL changed.
 
 ## 2026-10-25 version 1.0.0.3 published
 
