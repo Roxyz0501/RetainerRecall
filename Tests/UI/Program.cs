@@ -20,8 +20,10 @@ unsafe class Program
         Check(trailingCall > pluginSource.LastIndexOf("ImGui.BeginTabItem(", StringComparison.Ordinal) && trailingCall == pluginSource.LastIndexOf("StandardPluginTabs.DrawStandardTrailingTabs(", StringComparison.Ordinal), "one trailing helper follows every plugin-specific tab");
         var settingsAt = helperSource.IndexOf("{settingsLabel}###{settingsStableId}", StringComparison.Ordinal);
         var languageAt = helperSource.IndexOf("{languageSettingsLabel}###LanguageSettings", StringComparison.Ordinal);
+        var infoAt = helperSource.IndexOf("{infoLabel}###DependencyInfo", StringComparison.Ordinal);
         var supportAt = helperSource.IndexOf("{supportLabel}###Support", StringComparison.Ordinal);
-        Check(settingsAt >= 0 && settingsAt < languageAt && languageAt < supportAt, "shared tabs are ordered Settings, Language settings, Support");
+        Check(settingsAt >= 0 && settingsAt < infoAt && infoAt < languageAt && languageAt < supportAt, "shared tabs ordered Settings, Information, Language settings, Support");
+        Check(pluginSource.Contains("PluginDependencies.Items.Length == 0 ? null") && helperSource.Contains("drawInfo != null &&"), "zero definitions hide Information, independently of installation state");
         var output = Path.GetFullPath(args.Length > 0 ? args[0] : "artifacts"); Directory.CreateDirectory(output);
         Dummy.ConfigPath = Path.Combine(Path.GetTempPath(), "RetainerRecall-ui-" + Guid.NewGuid().ToString("N"), "config.json");
         Directory.CreateDirectory(Path.GetDirectoryName(Dummy.ConfigPath)!);
@@ -37,7 +39,8 @@ unsafe class Program
             var languages = (IReadOnlyList<(string Code, string SelfName)>)common.GetProperty("Languages")!.GetValue(null)!;
             Check(languages.Select(x => x.Code).SequenceEqual(L.Codes) && languages.Select(x => x.SelfName).SequenceEqual(L.Names), "canonical language order and self-names match stored codes");
             Check(Dummy.Fonts.Count == 4, "production font callback loaded all four CJK faces");
-            var required = string.Concat(L.AllStrings) + "言語 / Language";
+            var dependencyType = typeof(Plugin).Assembly.GetType("RetainerRecall.PluginDependencies")!;
+            var required = string.Concat(L.AllStrings) + (string)dependencyType.GetProperty("FontText")!.GetValue(null)! + "言語 / Language";
             foreach (var font in Dummy.Fonts)
             {
                 foreach (var ch in required.Distinct().Where(c => !char.IsControl(c) && c != '\u200B'))
@@ -55,11 +58,17 @@ unsafe class Program
             void Click(float x, float y) { io.AddMousePosEvent(x, y); Frame(); io.AddMouseButtonEvent(0, true); Frame(); io.AddMouseButtonEvent(0, false); Frame(); Frame(); }
             void Tab(int index)
             {
-                var labels = new[] { "ListingTab", "RecallTab", "SettingsTab", "LanguageSettings", "SupportTab" };
+                var labels = new[] { "ListingTab", "RecallTab", "SettingsTab", "Information", "LanguageSettings", "SupportTab" };
                 float x = 68;
                 ImGui.NewFrame();
                 ImGui.PushFont(Dummy.Fonts[L.Code switch { "zh-Hant" => 1, "zh-Hans" => 2, "ko" => 3, _ => 0 }]);
-                for (int i = 0; i < index; i++) x += ImGui.CalcTextSize(L.T(labels[i])).X + ImGui.GetStyle().FramePadding.X * 2 + ImGui.GetStyle().ItemInnerSpacing.X;
+                for (int i = 0; i < index; i++)
+                {
+                    var text = labels[i] == "Information"
+                        ? (string)typeof(Plugin).Assembly.GetType("Roxyz0501.Dalamud.CommonUi.StandardPluginInfo")!.GetMethod("Title")!.Invoke(null, [L.Code])!
+                        : L.T(labels[i]);
+                    x += ImGui.CalcTextSize(text).X + ImGui.GetStyle().FramePadding.X * 2 + ImGui.GetStyle().ItemInnerSpacing.X;
+                }
                 ImGui.PopFont();
                 ImGui.EndFrame();
                 Click(x + 15, 100);
@@ -83,7 +92,7 @@ unsafe class Program
             Click(79, 148);
             Check(Dummy.Config.EnableListing != enabled, "checkbox remains usable after seven language switches");
             Click(79, 148);
-            Tab(3);
+            Tab(4);
             Click(180, 136);
             Renderer.Render(ImGui.GetDrawData(), textures, Path.Combine(output, "language-menu.bmp"));
             Click(120, 165);
@@ -92,7 +101,7 @@ unsafe class Program
             for (int i = 0; i < 10; i++) Frame();
             setLanguage.Invoke(plugin, ["ja"]);
             Check(storage.Saves == saves, "rendering and reselecting current language do not write configuration");
-            Tab(1); Tab(2); Tab(4); Tab(3);
+            Tab(1); Tab(2); Tab(5); Tab(4);
             Check(storage.Saves == saves, "tab navigation performs zero configuration writes");
             Renderer.Render(ImGui.GetDrawData(), textures, Path.Combine(output, "en-interaction.bmp"));
             foreach (var code in new[] { "de", "fr", "ko", "zh-Hans", "zh-Hant", "ja", "en" })
@@ -100,12 +109,40 @@ unsafe class Program
                 setLanguage.Invoke(plugin, [code]); Frame(); Frame();
                 Tab(2);
                 Renderer.Render(ImGui.GetDrawData(), textures, Path.Combine(output, code + "-settings.bmp"));
-                Tab(3);
+                Tab(4);
                 Renderer.Render(ImGui.GetDrawData(), textures, Path.Combine(output, code + "-language.bmp"));
                 Tab(1);
                 Renderer.Render(ImGui.GetDrawData(), textures, Path.Combine(output, code + "-recall.bmp"));
-                Tab(4);
+                Tab(5);
                 Renderer.Render(ImGui.GetDrawData(), textures, Path.Combine(output, code + "-support.bmp"));
+            }
+            setLanguage.Invoke(plugin, ["en"]); Frame(); Frame();
+            var reads = Dummy.InstalledReads;
+            Tab(3);
+            Check(Dummy.InstalledReads == reads + 1, "Information reads local plugin status on first open");
+            var info = typeof(Plugin).GetField("info", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(plugin)!;
+            var cache = info.GetType().GetField("installed", BindingFlags.Instance | BindingFlags.NonPublic)!;
+            Check(((Dictionary<string, bool>)cache.GetValue(info)!).Count == 0, "no installed plugins retains visible optional Marketbuddy definition");
+            for (int i = 0; i < 20; i++) Frame();
+            Tab(2); Tab(3);
+            Check(Dummy.InstalledReads == reads + 1 && Dummy.InstallerOpens == 0, "rendering/reopening does not reread status or open installer");
+            Renderer.Render(ImGui.GetDrawData(), textures, Path.Combine(output, "en-info.bmp"));
+            Click(565, 249);
+            Check(Dummy.InstallerOpens == 1 && Dummy.LastInstallerSearch == "Marketbuddy" && Dummy.LastInstallerKind == "AllPlugins", "explicit Install click opens installer filtered to Marketbuddy");
+            Dummy.DependencyState = false;
+            Click(100, 135);
+            Check(((Dictionary<string, bool>)cache.GetValue(info)!)["Marketbuddy"] == false, "refresh distinguishes installed but disabled");
+            Click(565, 249);
+            Check(Dummy.InstallerOpens == 2 && Dummy.LastInstallerKind == "InstalledPlugins", "explicit Manage click opens installed plugin management");
+            Dummy.DependencyState = true; Click(100, 135);
+            Check(((Dictionary<string, bool>)cache.GetValue(info)!)["Marketbuddy"], "refresh distinguishes loaded dependency");
+            Dummy.FailStatus = true; Click(100, 135);
+            Check(cache.GetValue(info) == null, "status failure remains unknown rather than uninstalled");
+            Dummy.FailStatus = false; Dummy.DependencyState = null; Click(100, 135);
+            foreach (var code in L.Codes)
+            {
+                setLanguage.Invoke(plugin, [code]); Frame(); Frame();
+                Renderer.Render(ImGui.GetDrawData(), textures, Path.Combine(output, code + "-info.bmp"));
             }
             Dummy.Commands["/retainerrecall"].Handler("/retainerrecall", ""); Frame();
             Check(ImGui.GetDrawData().TotalVtxCount > 0, "legacy command opens settings");
@@ -131,6 +168,10 @@ public unsafe class Dummy : DispatchProxy
     public static Dictionary<string, Delegate?> Events = [];
     public static string Saved = "";
     public static int SaveCount;
+    public static int InstalledReads, InstallerOpens;
+    public static bool? DependencyState;
+    public static bool FailStatus;
+    public static string? LastInstallerSearch, LastInstallerKind;
     public static Dictionary<string, CommandInfo> Commands = [];
     public static List<ImFontPtr> Fonts = [];
     public static List<GCHandle> Pins = [];
@@ -141,6 +182,16 @@ public unsafe class Dummy : DispatchProxy
         if (method.Name.StartsWith("remove_")) { var key = method.Name[7..]; Events.TryGetValue(key, out var old); Events[key] = Delegate.Remove(old, (Delegate)args![0]!); return null; }
         switch (method!.Name)
         {
+            case "get_InstalledPlugins":
+                InstalledReads++;
+                if (FailStatus) throw new IOException("synthetic status failure");
+                var itemType = method.ReturnType.GetGenericArguments()[0];
+                var items = Array.CreateInstance(itemType, DependencyState.HasValue ? 1 : 0);
+                if (DependencyState.HasValue) items.SetValue(DispatchProxy.Create(itemType, typeof(Dummy)), 0);
+                return items;
+            case "get_InternalName": return "Marketbuddy";
+            case "get_IsLoaded": return DependencyState == true;
+            case "OpenPluginInstallerTo": InstallerOpens++; LastInstallerKind = args![0]!.ToString(); LastInstallerSearch = (string)args[1]!; return true;
             case "get_ConfigFile": return new FileInfo(ConfigPath);
             case "GetPluginConfig": return Config;
             case "SavePluginConfig": SaveCount++; Saved = Newtonsoft.Json.JsonConvert.SerializeObject(args![0]); return null;

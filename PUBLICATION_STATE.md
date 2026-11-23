@@ -1,5 +1,12 @@
 # Publication state
 
+## 2026-11-23 version 1.0.0.4 preparation
+
+- Adopted canonical StandardPluginInfo.cs/StandardPluginTabs.cs and specification unchanged. One optional dependency: Marketbuddy (quantity configuration and pricing lock IPC); no required dependency, no AutoRetainer/runtime library misclassification.
+- Settings → Information → Language settings → Support; zero definitions pass a null callback. Cached local status reads and click-only installer/official guide actions. Existing operations and persistence unchanged.
+- Release target: https://github.com/Roxyz0501/RetainerRecall/releases/tag/v1.0.0.4
+- Publication verification pending. Validation: VALIDATION_INFO.md.
+
 ## 2026-10-25 version 1.0.0.3 published
 
 - Full source review and regression fixes documented in REVIEW_2026-10-25.md. Parent AGENTS.md grants continuing update/publication authorization.

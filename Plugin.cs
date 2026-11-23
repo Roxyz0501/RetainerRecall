@@ -27,6 +27,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
     private readonly RecallRun run;
     private readonly ListingService listing;
     private readonly LocalizedFonts fonts;
+    private readonly StandardPluginInfo info = new(PluginDependencies.Items);
     private readonly List<CommandInfo> commandInfos = [];
     private bool settings;
     private Destination? requested;
@@ -153,7 +154,8 @@ public sealed unsafe class Plugin : IDalamudPlugin
                 StandardPluginTabs.DrawStandardTrailingTabs(
                     L.T("SettingsTab"), "Settings", DrawSettings,
                     L.T("LanguageSettings"), DrawLanguageSettings,
-                    L.T("SupportTab"), DrawSupport);
+                    L.T("SupportTab"), DrawSupport,
+                    StandardPluginInfo.Title(L.Code), PluginDependencies.Items.Length == 0 ? null : () => info.Draw(pi, L.Code));
                 ImGui.EndTabBar();
             }
         }
